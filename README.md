@@ -1,5 +1,7 @@
 # Chatter
 
+Chatter is a Go-To-Market tool that lets brands, individuals, or startups see where the "chatter" is for their keywords. Enter 5–20 keywords and get a report on which social platforms and projects hold mindshare over the past 30 days—so you can plan marketing and content around real trends.
+
 Desktop app to run [last30days-skill](https://github.com/mvanhorn/last30days-skill) on multiple topics in parallel.
 
 ## Requirements
