@@ -6,9 +6,9 @@
 
 ## Goal
 
-Turn Chatter into a wallet-connected **crypto mindshare / trend intelligence** web app:
+Turn Chatter into a wallet connected crypto mindshare / trend intelligence web app:
 
-Connect wallet (Dynamic) → enter keywords → Chatter pulls cross-platform mindshare → Gemini (Google Cloud) summarizes into a trend brief + extracts token tickers → show live on-chain prices (Chainlink feeds + 1inch Price API) → **act**: swap into the trend (1inch) → **publish**: save the brief to your `.eth` profile (ENS text record).
+Connect wallet (Dynamic) or sign in with .eth profile → enter keywords → Chatter pulls cross-platform mindshare → Gemini (Google Cloud) summarizes into a trend brief across socials + extracts token tickers → show live on-chain prices (Chainlink feeds + 1inch Price API) → allow users to act: swap into the trend (1inch) → publish: save the brief to your .eth profile (ENS text record).
 
 ## Target prizes (~$65k surface)
 
