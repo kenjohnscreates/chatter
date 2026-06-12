@@ -1,91 +1,75 @@
-# ETHGlobal New York 2026 — Hackathon Plan
+# ETHGlobal New York 2026 — Hackathon Plan (rev 4, locked)
 
-**Track:** Extend Open Source (build on existing Chatter codebase)  
-**Timeline:** ~30 hours (2.5 days × 12h)  
-**Status:** Planned — not started. See [README](../README.md#current-status).
+**Track:** Extend Open Source (Continuity)  
+**Window:** Fri evening → Sun 9:00am EDT = 16h build + 2h video/docs  
+**Partner prize selections (cap of 3):** Dynamic, Uniswap, ENS  
+**Status:** Planned — build starts at the event. See [README](../README.md#current-status).
 
-## Goal
+## User flow (the demo is the product)
 
-Turn Chatter into a wallet connected crypto mindshare / trend intelligence web app:
+1. **Land** on Chatter; sign in with email/social or wallet — Dynamic creates an embedded wallet silently for users who don't have one
+2. **Pay $1** to unlock a research run — Fireblocks Flow checkout on Base Sepolia (pay in any supported token, Chatter settles in USDC)
+3. **Research** — enter 5-20 keywords; trend dashboard shows topics, aggregate strength across scraped mediums, Gemini trend briefs, and associated coins. Each coin card pairs **social mindshare** (chatter score) with **on-chain momentum** (Uniswap 24h pool volume/price delta) — "trending" means both signals agree
+4. **Own it** — payment mints `you.chatter.eth` (Sepolia subname); your trend brief is written to your name's text records; public topic indexes published on `chatter.eth`
+5. **Act** — swap into a trending coin via the Uniswap API (testnet execution, txids recorded)
 
-Connect wallet (Dynamic) or sign in with .eth profile → enter keywords → Chatter pulls cross-platform mindshare → Gemini (Google Cloud) summarizes into a trend brief across socials + extracts token tickers → show live on-chain prices (Chainlink feeds + 1inch Price API) → allow users to act: swap into the trend (1inch) → publish: save the brief to your .eth profile (ENS text record).
+**ENS value prop:** *Chatter has no user database — ENS is the account system and the receipt ledger. Your research belongs to your name, not our backend.* Proof in demo: resolve the user's subname in the official ENS app.
 
-## Target prizes (~$65k surface)
+## Prize tracks reachable
 
-| Sponsor | Prize | Integration |
-|---------|-------|-------------|
-| ENS | $20k | Sign-in identity, publish trend brief to `.eth` text record |
-| Google Cloud | $20k | Vertex AI Gemini summarization + Cloud Run deploy |
-| Dynamic | $10k | Wallet + social login |
-| Chainlink | $10k | Read Data Feed aggregators on mainnet via viem |
-| 1inch | $5k | Spot Price API + Swap API |
+| Partner | Tracks | Key requirements |
+|---------|--------|------------------|
+| Dynamic | Flow ($3k), Best Overall ($2k), Wallet Glow Up ($2k, Continuity-only) | Deployed app usable by judges; Flow auto-enabled via ETHGlobal NYC form in dashboard |
+| Uniswap | Best API Integration ($7k) | Real on-chain txids (testnet OK), public repo, demo video ≤3 min, developer feedback form |
+| ENS | Integrate ENS pool ($6k split), Continuity ($4k), Most Creative ($5k) | Real ENS code, functional demo, no hard-coded values, booth presentation Sunday morning |
 
 ## Architecture
 
 ```mermaid
 flowchart LR
-    U[User Wallet] --> FE[Next.js App]
-    FE -->|login + ENS| DYN[Dynamic SDK]
-    FE -->|POST /research| API[FastAPI service]
-    API -->|subprocess| SKILL[last30days-skill]
-    API -->|summarize| GEM[Vertex AI Gemini]
-    FE -->|read feeds| CL[Chainlink Aggregators viem mainnet]
-    FE -->|token prices| ONEINCH[1inch APIs]
-    FE -->|swap testnet| ONEINCH
-    FE -->|write text record| ENS[ENS resolver Sepolia]
-    FE --> CR1[Cloud Run web]
-    API --> CR2[Cloud Run api]
+    U[User email or wallet] --> DYN[Dynamic embedded wallet]
+    DYN --> PAY[Flow checkout 1 USD Base Sepolia]
+    PAY --> API[FastAPI one file]
+    API --> SKILL[last30days-skill subprocess]
+    API --> GEM[Gemini trend brief + coins]
+    PAY --> SUB[Mint you.chatter.eth + brief in text records ENS Sepolia]
+    API --> PUB[Public topic records on chatter.eth]
+    GEM --> SWAP[Uniswap API swap testnet]
 ```
 
-**Networks:** mainnet read-only (Chainlink feeds, 1inch prices) + Sepolia for writes (ENS text records, demo swaps).
+Chains: Base Sepolia (Flow paywall, swap), Ethereum Sepolia (ENS subnames via NameWrapper, app server-signer owns parent name).
 
-## Planned repo layout (hackathon additions)
+## Build plan (16h)
 
-| Path | Purpose |
-|------|---------|
-| `api/` | FastAPI: `POST /research`, `POST /summarize` |
-| `web/` | Next.js (App Router, TS, Tailwind, wagmi/viem, Dynamic SDK) |
-| `core/research.py` | Qt-free research runner extracted from `core/research_worker.py` |
+| Phase | Time | Work |
+|-------|------|------|
+| 0 | 2h | `core/research.py` (Qt-free runner), one-file FastAPI, pre-cached demo results |
+| 1 | 2h | Next.js: landing, keyword input, trend dashboard shell |
+| 2 | 1.5h | Dynamic login + embedded wallets; PyQt before/after assets |
+| 3 | 2h | Flow $1 checkout (JS SDK, Base Sepolia); research gated on settlement |
+| 4 | 1.5h | Gemini briefs + associated-coin extraction |
+| 5 | 2.5h | ENS subname mint on payment, brief in text records, public topic records |
+| 6 | 2.5h | Uniswap: on-chain momentum data (24h volume + price delta per coin) + swap quote/execute (testnet), record txids |
+| 7 | 1.5h | Cloud Run deploy |
+| — | 0.5h | Buffer |
 
-## Phase plan
+**Cut order if behind:** public topic records → on-chain momentum cards (swap txids alone still qualify) → Flow downgrades to plain USDC transfer → drop Uniswap (txids mandatory, quote-only earns nothing; submit 2 partners) → simplify visualizations.
 
-### Phase 0 — Scaffold + thin API (~4h)
-- Extract subprocess logic from `core/research_worker.py` into `core/research.py`
-- FastAPI `POST /research` with parallel skill runs
-- Next.js scaffold with keyword input + results calling API
+**Final 2h:** ~3 min demo video (email login → $1 payment → dashboard → subname in official ENS app → swap txid), submission form, Uniswap feedback form.
 
-### Phase 1 — Auth + ENS (~5h)
-- Dynamic SDK login
-- Resolve primary ENS name + avatar
-- Write/read trend brief to ENS text record on Sepolia
+## Compliance
 
-### Phase 2 — Research + AI summary (~6h)
-- Wire frontend to `/research`
-- Vertex AI Gemini: trend brief + token ticker extraction
+- Granular commits throughout (single-dump histories risk disqualification)
+- AI attribution: Cursor used; plan docs stay in repo as directed-AI artifacts
+- README separates pre-existing work from hackathon work (Continuity rule)
+- ENS booth presentation Sunday morning
+- Demo video 2-4 min (≤3 for Uniswap)
 
-### Phase 3 — On-chain token data (~5h)
-- Chainlink Data Feed reads via viem (mainnet)
-- 1inch Spot Price API fallback
-- "Chatter Index" cards: mindshare + on-chain price
+## Pre-build checklist (tonight)
 
-### Phase 4 — Act on the trend (~4h)
-- 1inch Swap API quote + execute on Sepolia
-
-### Phase 5 — Deploy + demo (~6h)
-- Dockerize + deploy to Google Cloud Run
-- Prize qualification checklist, demo script, screenshots
-
-## Per-prize qualification checklist
-
-- **Dynamic:** login via Dynamic SDK in demo
-- **ENS:** resolve name/avatar + write/read text record
-- **Google Cloud:** Vertex AI Gemini + Cloud Run deploy
-- **Chainlink:** read price feed aggregator(s) on-chain via viem
-- **1inch:** Spot Price API + Swap API execution
-
-## Cuts if time runs short
-
-1. **Keep:** Dynamic login, research + Gemini, Chainlink feed read
-2. **Trim first:** ENS text-record write → ENS read-only identity
-3. **Trim:** 1inch swap execution → quote-only
-4. **Fallback:** demo locally if Cloud Run blocks; still call Vertex AI
+- Dynamic env ID + ETHGlobal NYC Flow enablement form (Dashboard > Account > Settings)
+- Uniswap Developer Platform API key; locate feedback form
+- Gemini API key (AI Studio)
+- Alchemy RPC keys (Ethereum Sepolia + Base Sepolia)
+- Faucet ETH on both testnets; register chatter parent ENS name on Sepolia (wrapped)
+- Test 3-5 demo keywords through the skill; pick ones with rich chatter

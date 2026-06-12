@@ -26,18 +26,18 @@ This repo is the starting point for [ETHGlobal New York 2026](https://ethglobal.
 
 ### Planned during hackathon
 
-Wallet-connected web app: research keywords → AI trend brief → on-chain token prices → swap + publish to ENS.
+Monetized pay-research-act web app: sign in (embedded wallet for no-wallet users) → pay $1 → keyword research with AI trend briefs → coin cards pairing social mindshare with on-chain momentum → swap into trending coins → research owned by your ENS name.
 
 Full plan: [docs/HACKATHON_PLAN.md](docs/HACKATHON_PLAN.md)
 
-| Addition | Target prizes |
-|----------|---------------|
-| `web/` — Next.js frontend | — |
-| `api/` — FastAPI service wrapping research + Gemini | Google Cloud |
-| Dynamic SDK auth | Dynamic |
-| ENS identity + trend brief text records | ENS |
-| Chainlink price feeds + 1inch prices/swaps | Chainlink, 1inch |
-| Cloud Run deploy | Google Cloud |
+| Addition | Target partner |
+|----------|----------------|
+| `web/` — Next.js frontend (landing, trend dashboard) | — |
+| `api/` — FastAPI service wrapping research + Gemini briefs | — |
+| Embedded-wallet login + $1 Flow checkout | Dynamic |
+| `you.chatter.eth` subnames: account, receipt, brief in text records | ENS |
+| On-chain momentum data + swap into trending coins | Uniswap |
+| Cloud Run deploy | — |
 
 When hackathon work lands, this section will be updated to reflect completed milestones.
 
