@@ -6,14 +6,16 @@ import AssetCard from "@/components/AssetCard";
 import Paywall from "@/components/Paywall";
 import TopicCard from "@/components/TopicCard";
 import {
+  agreementLabel,
+  getAssets,
   postResearch,
   postSummarize,
   type Asset,
+  type OnChainAsset,
   type ResearchResult,
   type SummarizeResponse,
 } from "@/lib/api";
 import type { FlowResult } from "@/lib/flow";
-import { mockOnChainForAsset } from "@/lib/mockOnChain";
 
 function paidStorageKey(address?: string): string {
   return `chatter:paid:${(address ?? "anon").toLowerCase()}`;
@@ -50,6 +52,9 @@ export default function ResearchPage() {
   const [phase, setPhase] = useState<"idle" | "running" | "done">("idle");
   const [globalError, setGlobalError] = useState<string | null>(null);
   const [paid, setPaid] = useState(false);
+  const [onChainByTicker, setOnChainByTicker] = useState<
+    Record<string, OnChainAsset>
+  >({});
 
   const address = primaryWallet?.address;
 
@@ -84,6 +89,26 @@ export default function ResearchPage() {
     }
     return assets;
   }, [rows]);
+
+  useEffect(() => {
+    if (allAssets.length === 0) {
+      setOnChainByTicker({});
+      return;
+    }
+    const tickers = allAssets.map((a) => a.ticker);
+    let cancelled = false;
+    void getAssets(tickers).then((assets) => {
+      if (cancelled) return;
+      const map: Record<string, OnChainAsset> = {};
+      for (const asset of assets) {
+        map[asset.ticker.toUpperCase()] = asset;
+      }
+      setOnChainByTicker(map);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [allAssets]);
 
   async function runResearch() {
     if (!validCount) return;
@@ -268,20 +293,22 @@ export default function ResearchPage() {
                 </h2>
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                   {allAssets.map((asset) => {
-                    const mock = mockOnChainForAsset(
-                      asset.ticker,
-                      asset.confidence,
-                    );
+                    const onChain = onChainByTicker[asset.ticker.toUpperCase()];
+                    const momentum = onChain?.momentum_score ?? 0;
+                    const delta = onChain?.price_change_24h ?? 0;
                     return (
                       <AssetCard
                         key={asset.ticker}
                         ticker={asset.ticker}
-                        name={asset.name}
+                        name={onChain?.name ?? asset.name}
                         kind={asset.kind}
                         confidence={asset.confidence}
-                        onChainMomentum={mock.onChainMomentum}
-                        priceDeltaPercent={mock.priceDeltaPercent}
-                        agreementLabel={mock.agreementLabel}
+                        onChainMomentum={momentum}
+                        priceDeltaPercent={delta}
+                        agreementLabel={agreementLabel(
+                          asset.confidence,
+                          momentum,
+                        )}
                       />
                     );
                   })}

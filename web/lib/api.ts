@@ -61,3 +61,35 @@ export async function postSummarize(
   });
   return parseJson<SummarizeResponse>(res, `Summarize (${keyword})`);
 }
+
+export interface OnChainAsset {
+  ticker: string;
+  name: string;
+  kind: "crypto" | "equity" | "unknown";
+  status: "verified" | "unverified";
+  badge: string | null;
+  momentum_score: number;
+  price_change_24h: number | null;
+  volume_24h: number | null;
+}
+
+export async function getAssets(tickers: string[]): Promise<OnChainAsset[]> {
+  if (tickers.length === 0) return [];
+  const res = await fetch(
+    `${API_BASE}/assets?tickers=${encodeURIComponent(tickers.join(","))}`,
+  );
+  const data = await parseJson<{ assets: OnChainAsset[] }>(res, "Assets");
+  return data.assets;
+}
+
+export function agreementLabel(
+  socialConfidence: number,
+  onChainMomentum: number,
+): string {
+  const socialHigh = socialConfidence >= 0.6;
+  const chainHigh = onChainMomentum >= 60;
+  if (socialHigh && chainHigh) return "Confirmed trend";
+  if (socialHigh && !chainHigh) return "Narrative only";
+  if (!socialHigh && chainHigh) return "Quiet accumulation";
+  return "Watch";
+}
