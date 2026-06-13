@@ -1,4 +1,12 @@
-# ETHGlobal New York 2026 — Hackathon Plan (rev 4, locked)
+# ETHGlobal New York 2026 — Hackathon Plan (rev 5, locked)
+
+> Execution detail lives in [PRD.md](PRD.md) — task breakdown with files, acceptance criteria, dependencies, and model-tier assignments for delegated builds.
+
+**Rev 5 updates (from on-site meetings with Uniswap):**
+- Install Uniswap AI skills (`npx skills add Uniswap/uniswap-ai`) before building — the `swap-integration` skill documents the exact Trading API flow (check_approval, quote, execute) and guides any coding agent.
+- **Tokenized assets** (launched June 12, live via the same Uniswap API): trends map to ANY tradable asset — crypto coins or tokenized equities (Tesla, NVIDIA, SpaceX). Display + quote equities; execute demo swaps on regular tokens only (security pools may be compliance-gated by v4 hooks).
+- Maintain `docs/UNISWAP_FEEDBACK.md` during the build — Uniswap team asked for a feedback file tracking API errors/bugs/DX friction.
+- API key rate limit is 6 RPS — all Uniswap responses cached server-side.
 
 **Track:** Extend Open Source (Continuity)  
 **Window:** Fri evening → Sun 9:00am EDT = 16h build + 2h video/docs  
