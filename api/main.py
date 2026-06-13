@@ -15,6 +15,7 @@ from pydantic import BaseModel, Field
 
 from core.research import run_research
 from api.gemini import summarize_markdown
+from api.uniswap_data import get_assets, load_token_list
 
 
 app = FastAPI()
@@ -108,6 +109,14 @@ def summarize(req: SummarizeRequest) -> dict:
     return summarize_markdown(markdown, keyword=keyword or None, use_cache=req.cached)
 
 
+@app.on_event("startup")
+def _warm_token_list() -> None:
+    load_token_list()
+
+
 @app.get("/assets")
-def assets(tickers: str = "") -> None:
-    raise HTTPException(status_code=501, detail="assets is not implemented")
+def assets(tickers: str = "") -> dict:
+    symbols = [ticker.strip() for ticker in tickers.split(",") if ticker.strip()]
+    if not symbols:
+        return {"assets": []}
+    return get_assets(symbols)
