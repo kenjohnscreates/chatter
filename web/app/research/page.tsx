@@ -1,7 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import AssetCard from "@/components/AssetCard";
+import Paywall from "@/components/Paywall";
 import TopicCard from "@/components/TopicCard";
 import {
   postResearch,
@@ -10,7 +12,12 @@ import {
   type ResearchResult,
   type SummarizeResponse,
 } from "@/lib/api";
+import type { FlowResult } from "@/lib/flow";
 import { mockOnChainForAsset } from "@/lib/mockOnChain";
+
+function paidStorageKey(address?: string): string {
+  return `chatter:paid:${(address ?? "anon").toLowerCase()}`;
+}
 
 const DEMO_KEYWORDS = [
   "restaking",
@@ -37,10 +44,27 @@ function parseKeywords(raw: string): string[] {
 }
 
 export default function ResearchPage() {
+  const { primaryWallet } = useDynamicContext();
   const [input, setInput] = useState("");
   const [rows, setRows] = useState<TopicRow[]>([]);
   const [phase, setPhase] = useState<"idle" | "running" | "done">("idle");
   const [globalError, setGlobalError] = useState<string | null>(null);
+  const [paid, setPaid] = useState(false);
+
+  const address = primaryWallet?.address;
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    setPaid(window.localStorage.getItem(paidStorageKey(address)) === "1");
+  }, [address]);
+
+  function handlePaymentSuccess(_result: FlowResult) {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(paidStorageKey(address), "1");
+    }
+    setPaid(true);
+    // T9 hook: trigger ENS subname mint from this callback.
+  }
 
   const keywords = useMemo(() => parseKeywords(input), [input]);
   const count = keywords.length;
@@ -129,6 +153,16 @@ export default function ResearchPage() {
     setRows([]);
     setPhase("idle");
     setGlobalError(null);
+  }
+
+  if (!paid) {
+    return (
+      <div className="min-h-full bg-zinc-950 text-zinc-100">
+        <main className="mx-auto max-w-6xl px-6 py-16">
+          <Paywall onPaymentSuccess={handlePaymentSuccess} />
+        </main>
+      </div>
+    );
   }
 
   return (

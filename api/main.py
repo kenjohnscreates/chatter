@@ -5,7 +5,10 @@
 from __future__ import annotations
 
 import json
+import os
 import re
+import urllib.error
+import urllib.request
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
@@ -16,6 +19,16 @@ from pydantic import BaseModel, Field
 from core.research import run_research
 from api.gemini import summarize_markdown
 from api.uniswap_data import get_assets, load_token_list
+
+# Load repo-root .env so server secrets (DYNAMIC_API_KEY etc.) resolve without a launcher.
+_ENV_PATH = Path(__file__).resolve().parent.parent / ".env"
+if _ENV_PATH.exists():
+    for _line in _ENV_PATH.read_text(encoding="utf-8").splitlines():
+        _line = _line.strip()
+        if not _line or _line.startswith("#") or "=" not in _line:
+            continue
+        _key, _, _val = _line.partition("=")
+        os.environ.setdefault(_key.strip(), _val.strip())
 
 
 app = FastAPI()
@@ -107,6 +120,85 @@ def summarize(req: SummarizeRequest) -> dict:
     if not markdown:
         raise HTTPException(status_code=400, detail="markdown or keyword is required")
     return summarize_markdown(markdown, keyword=keyword or None, use_cache=req.cached)
+
+
+# --- Dynamic Flow paywall (Dynamic prize) ---------------------------------
+# Creates the $1 Base Sepolia USDC checkout config server-side so the dyn_ API
+# token is NEVER exposed to the browser. The browser then runs the per-payment
+# transaction steps with the short-lived dct_ session token (see web/lib/flow.ts).
+DYNAMIC_API_BASE = os.environ.get("DYNAMIC_API_BASE", "https://app.dynamicauth.com/api/v0")
+BASE_SEPOLIA_CHAIN_ID = "84532"
+BASE_SEPOLIA_USDC = "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
+
+_checkout_cache: dict[str, str] = {}
+
+
+def _create_flow_checkout() -> str:
+    api_key = os.environ.get("DYNAMIC_API_KEY")
+    environment_id = os.environ.get("DYNAMIC_ENVIRONMENT_ID")
+    treasury = os.environ.get("CHATTER_TREASURY_ADDRESS")
+    if not api_key or not environment_id or not treasury:
+        raise HTTPException(
+            status_code=500,
+            detail="Flow paywall not configured: set DYNAMIC_API_KEY, DYNAMIC_ENVIRONMENT_ID, CHATTER_TREASURY_ADDRESS",
+        )
+
+    cache_key = f"{environment_id}:{treasury}"
+    if cache_key in _checkout_cache:
+        return _checkout_cache[cache_key]
+
+    payload = {
+        "mode": "payment",
+        "settlementConfig": {
+            "strategy": "cheapest",
+            "settlements": [
+                {
+                    "chainName": "EVM",
+                    "chainId": BASE_SEPOLIA_CHAIN_ID,
+                    "tokenAddress": BASE_SEPOLIA_USDC,
+                    "symbol": "USDC",
+                    "tokenDecimals": 6,
+                    "isNative": False,
+                }
+            ],
+        },
+        "destinationConfig": {
+            "destinations": [
+                {"chainName": "EVM", "type": "address", "identifier": treasury}
+            ]
+        },
+        "enableOrchestration": True,
+    }
+
+    request = urllib.request.Request(
+        f"{DYNAMIC_API_BASE}/environments/{environment_id}/checkouts",
+        data=json.dumps(payload).encode("utf-8"),
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        },
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=30) as response:
+            data = json.loads(response.read().decode("utf-8"))
+    except urllib.error.HTTPError as exc:
+        detail = exc.read().decode("utf-8", "replace")
+        raise HTTPException(status_code=502, detail=f"Flow checkout creation failed: {detail}") from exc
+    except urllib.error.URLError as exc:
+        raise HTTPException(status_code=502, detail=f"Flow checkout request failed: {exc.reason}") from exc
+
+    checkout_id = data.get("id")
+    if not isinstance(checkout_id, str):
+        raise HTTPException(status_code=502, detail="Flow checkout response missing id")
+
+    _checkout_cache[cache_key] = checkout_id
+    return checkout_id
+
+
+@app.post("/checkout")
+def checkout() -> dict:
+    return {"checkoutId": _create_flow_checkout()}
 
 
 @app.on_event("startup")
