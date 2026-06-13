@@ -20,12 +20,15 @@ try:
 except ImportError:
     _SSL_CONTEXT = None
 
+from typing import Any
+
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from core.research import run_research
 from api.gemini import summarize_markdown
+from api.ens import mint_subname, publish_brief, read_records
 from api.uniswap_data import get_assets, load_token_list
 
 # Load repo-root .env so server secrets (DYNAMIC_API_KEY etc.) resolve without a launcher.
@@ -61,6 +64,17 @@ class SummarizeRequest(BaseModel):
     keyword: str = ""
     markdown: str = ""
     cached: bool = True
+
+
+class EnsMintRequest(BaseModel):
+    ownerAddress: str
+    paymentTxHash: str | None = None
+
+
+class EnsBriefRequest(BaseModel):
+    ownerAddress: str
+    subname: str | None = None
+    brief: Any = None
 
 
 def _slug(keyword: str) -> str:
@@ -209,6 +223,51 @@ def _create_flow_checkout() -> str:
 @app.post("/checkout")
 def checkout() -> dict:
     return {"checkoutId": _create_flow_checkout()}
+
+
+@app.post("/ens/mint")
+def ens_mint(req: EnsMintRequest) -> dict:
+    owner = req.ownerAddress.strip()
+    if not owner.startswith("0x") or len(owner) != 42:
+        raise HTTPException(status_code=400, detail="ownerAddress must be a 0x-prefixed wallet")
+    try:
+        return mint_subname(owner, payment_tx_hash=req.paymentTxHash)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"ENS mint failed: {exc}") from exc
+
+
+@app.get("/ens/records")
+def ens_records(subname: str = Query(..., min_length=3)) -> dict:
+    try:
+        records = read_records(subname.strip().lower())
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"ENS read failed: {exc}") from exc
+    return {"subname": subname.strip().lower(), "records": records}
+
+
+@app.post("/ens/brief")
+def ens_brief(req: EnsBriefRequest) -> dict:
+    owner = req.ownerAddress.strip()
+    if not owner.startswith("0x") or len(owner) != 42:
+        raise HTTPException(status_code=400, detail="ownerAddress must be a 0x-prefixed wallet")
+    if req.brief is None:
+        raise HTTPException(status_code=400, detail="brief is required")
+    try:
+        return publish_brief(
+            owner,
+            req.brief,
+            subname=req.subname.strip().lower() if req.subname else None,
+        )
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"ENS brief publish failed: {exc}") from exc
 
 
 @app.on_event("startup")
