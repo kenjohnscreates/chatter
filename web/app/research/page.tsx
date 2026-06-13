@@ -133,15 +133,6 @@ export default function ResearchPage() {
 
   return (
     <div className="min-h-full bg-zinc-950 text-zinc-100">
-      <header className="border-b border-zinc-800 bg-zinc-950/80 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <a href="/" className="text-sm font-semibold tracking-tight text-white">
-            Chatter
-          </a>
-          <span className="text-xs text-zinc-500">Trend dashboard</span>
-        </div>
-      </header>
-
       <main className="mx-auto max-w-6xl px-6 py-10">
         <section className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
