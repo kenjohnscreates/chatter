@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, type ReactNode } from "react";
 import {
   DynamicContextProvider,
+  mergeNetworks,
   useDynamicContext,
   useDynamicWaas,
 } from "@dynamic-labs/sdk-react-core";
@@ -12,6 +13,25 @@ import { ChainEnum } from "@dynamic-labs/sdk-api-core";
 import { EthereumWalletConnectors } from "@dynamic-labs/ethereum";
 
 const environmentId = process.env.NEXT_PUBLIC_DYNAMIC_ENVIRONMENT_ID;
+
+const customEvmNetworks = [
+  {
+    blockExplorerUrls: ["https://sepolia.basescan.org"],
+    chainId: 84532,
+    chainName: "Base Sepolia",
+    iconUrls: ["https://app.dynamic.xyz/assets/networks/base.svg"],
+    name: "Base Sepolia",
+    nativeCurrency: {
+      decimals: 18,
+      name: "Ether",
+      symbol: "ETH",
+      iconUrl: "https://app.dynamic.xyz/assets/networks/eth.svg",
+    },
+    networkId: 84532,
+    rpcUrls: ["https://sepolia.base.org"],
+    vanityName: "Base Sepolia",
+  },
+];
 
 function truncateAddress(address: string) {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
@@ -129,6 +149,9 @@ export default function DynamicLogin({ children }: { children: ReactNode }) {
       settings={{
         environmentId: environmentId || "",
         walletConnectors: [EthereumWalletConnectors],
+        overrides: {
+          evmNetworks: (networks) => mergeNetworks(customEvmNetworks, networks),
+        },
       }}
       theme="dark"
     >
