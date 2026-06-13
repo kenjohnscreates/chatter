@@ -1,0 +1,18 @@
+{
+  "themes": [
+    "24/7 stock exposure on-chain",
+    "RWA market-cap growth",
+    "Exchange expansion and margin collateral",
+    "Regulatory and liquidity concerns"
+  ],
+  "sentiment": "mixed",
+  "momentum_score": 74,
+  "assets": [
+    {
+      "ticker": "SPX",
+      "name": "SpaceX",
+      "kind": "equity",
+      "confidence": 0.7
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "themes": [
+    "EigenLayer and liquid restaking education",
+    "Capital efficiency for staked ETH",
+    "Omnichain collateral and contagion risk",
+    "DeFi narrative rotation"
+  ],
+  "sentiment": "mixed",
+  "momentum_score": 62,
+  "assets": [
+    {
+      "ticker": "ETH",
+      "name": "Ethereum",
+      "kind": "crypto",
+      "confidence": 0.85
+    },
+    {
+      "ticker": "EIGEN",
+      "name": "EigenLayer",
+      "kind": "crypto",
+      "confidence": 0.78
+    }
+  ]
+}

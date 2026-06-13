@@ -1,0 +1,18 @@
+{
+  "themes": [
+    "Base onboarding and beginner education",
+    "Coinbase L2 ecosystem growth",
+    "Ethereum scaling and OP Stack infrastructure",
+    "Developer activity around Base apps"
+  ],
+  "sentiment": "neutral",
+  "momentum_score": 58,
+  "assets": [
+    {
+      "ticker": "ETH",
+      "name": "Ethereum",
+      "kind": "crypto",
+      "confidence": 0.74
+    }
+  ]
+}

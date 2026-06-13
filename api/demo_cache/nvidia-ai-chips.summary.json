@@ -1,0 +1,18 @@
+{
+  "themes": [
+    "RTX Spark and personal AI PCs",
+    "Blackwell chip performance claims",
+    "China export-control and supply-chain risk",
+    "Developer interest in NVIDIA AI tooling"
+  ],
+  "sentiment": "bullish",
+  "momentum_score": 78,
+  "assets": [
+    {
+      "ticker": "NVDA",
+      "name": "NVIDIA",
+      "kind": "equity",
+      "confidence": 0.98
+    }
+  ]
+}

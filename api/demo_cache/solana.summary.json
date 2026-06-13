@@ -1,0 +1,18 @@
+{
+  "themes": [
+    "Ecosystem tooling and mobile projects",
+    "DEX volume and RWA interest",
+    "Mixed price-action commentary",
+    "Developer activity across Solana repos"
+  ],
+  "sentiment": "mixed",
+  "momentum_score": 70,
+  "assets": [
+    {
+      "ticker": "SOL",
+      "name": "Solana",
+      "kind": "crypto",
+      "confidence": 0.99
+    }
+  ]
+}

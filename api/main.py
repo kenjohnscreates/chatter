@@ -14,6 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from core.research import run_research
+from api.gemini import summarize_markdown
 
 
 app = FastAPI()
@@ -32,6 +33,12 @@ MAX_WORKERS = 6
 class ResearchRequest(BaseModel):
     keywords: list[str] = Field(default_factory=list)
     cached: bool = False
+
+
+class SummarizeRequest(BaseModel):
+    keyword: str = ""
+    markdown: str = ""
+    cached: bool = True
 
 
 def _slug(keyword: str) -> str:
@@ -88,8 +95,17 @@ def research(req: ResearchRequest, cached: bool = Query(False)) -> dict:
 
 
 @app.post("/summarize")
-def summarize() -> None:
-    raise HTTPException(status_code=501, detail="summarize is not implemented")
+def summarize(req: SummarizeRequest) -> dict:
+    keyword = req.keyword.strip()
+    markdown = req.markdown
+    if not markdown and keyword:
+        cached = _cached_research(keyword)
+        if not cached.get("ok"):
+            raise HTTPException(status_code=404, detail=cached.get("stderr", "cached result not found"))
+        markdown = str(cached.get("markdown", ""))
+    if not markdown:
+        raise HTTPException(status_code=400, detail="markdown or keyword is required")
+    return summarize_markdown(markdown, keyword=keyword or None, use_cache=req.cached)
 
 
 @app.get("/assets")
