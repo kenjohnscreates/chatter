@@ -69,6 +69,7 @@ export interface OnChainAsset {
   status: "verified" | "unverified";
   badge: string | null;
   momentum_score: number;
+  price: number | null;
   price_change_24h: number | null;
   volume_24h: number | null;
 }
