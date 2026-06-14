@@ -109,7 +109,7 @@ last30days-skill  ──►  core/research.py  ──►  api/main.py  ◄──
 | **Trend briefs** | **Gemini** in-product (`api/gemini.py`) |
 | **Implementation** | **Cursor** agents directed by [docs/PRD.md](docs/PRD.md) and [docs/HACKATHON_PLAN.md](docs/HACKATHON_PLAN.md) |
 
-We committed granular task history (~25 commits) per ETHGlobal guidance. Plan docs in `docs/` are the directed-AI artifacts.
+Committed granular task history (~25 commits) per ETHGlobal guidance. Plan docs in `docs/` are the directed-AI artifacts.
 
 ---
 
@@ -130,4 +130,4 @@ Outputs also land under `~/Documents/Last30Days/` via the skill.
 
 ## License
 
-See repository license file. `last30days-skill` is a separate upstream dependency.
+See repository license file. `last30days-skill` is a separate upstream open-source dependency.
