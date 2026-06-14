@@ -1,7 +1,5 @@
 # Chatter — integration explainer
 
-Plain-English guide for judges and submission forms. One paragraph per integration; maps 1:1 to code files in the repo.
-
 **Demo path:** sign in → pay $1 → run research → topic + asset cards → swap (crypto) → ENS receipt at bottom.
 
 **Live app:** [chatterethglobal.vercel.app](https://chatterethglobal.vercel.app)
@@ -20,40 +18,40 @@ Chatter is an open-source GTM mindshare tool (PyQt desktop app wrapping [last30d
 
 ## Dynamic — embedded wallets + Flow paywall
 
-**What we built:** Email/social or external-wallet login via Dynamic; embedded wallets are created automatically for users without one. A **$1 Fireblocks Flow** checkout on **Base Sepolia** gates research — pay with supported assets, Flow settles to USDC. Server creates checkout configs (API key never in browser); client completes the transaction with the user's Dynamic session.
+**What was built:** Email/social or external-wallet login via Dynamic; embedded wallets are created automatically for users without one. A **$1 Fireblocks Flow** checkout on **Base Sepolia** gates research — pay with supported assets, Flow settles to USDC. Server creates checkout configs (API key never in browser); client completes the transaction with the user's Dynamic session.
 
 **Why it matters:** Walletless users get the full stack (pay → research → swap → ENS) from a single login — the "Wallet Glow Up" from desktop PyQt to web.
 
 **Files:** `web/components/DynamicLogin.tsx`, `web/lib/flow.ts`, `web/components/Paywall.tsx`, `web/components/PaymentReceipt.tsx`, `api/main.py` (checkout REST routes)
 
 **Submission writeup (Dynamic):**  
-Chatter uses Dynamic for auth and embedded wallets so anyone can sign in with email and immediately get an address for Base Sepolia payments, Sepolia swaps, and ENS ownership. Flow checkout unlocks each research run; we hit real WAF/SSL and WaaS race conditions during integration and documented fixes in the repo. Payment success unlocks research and triggers ENS subname minting.
+Chatter uses Dynamic for auth and embedded wallets so anyone can sign in with email and immediately get an address for Base Sepolia payments, Sepolia swaps, and ENS ownership. Flow checkout unlocks each research run; hit real WAF/SSL and WaaS race conditions during integration and documented fixes in the repo. Payment success unlocks research and triggers ENS subname minting.
 
 ---
 
 ## Uniswap — market data + testnet swap
 
-**What we built:** Server-side Uniswap data gateway (GraphQL) resolves tickers to tokens, fetches 24h volume and price change, discovers **tokenized equities** (Tesla, NVIDIA, etc.), and pairs social mindshare with on-chain momentum on asset cards. Swap execution uses the **Uniswap Trading API** from the embedded wallet on **Ethereum Sepolia** (WETH→UNI — the only liquid testnet pair we found). Tokenized equities are quote/display only when the API blocks execution (v4 compliance).
+**What was built:** Server-side Uniswap data gateway (GraphQL) resolves tickers to tokens, fetches 24h volume and price change, discovers **tokenized equities** (Tesla, NVIDIA, etc.), and pairs social mindshare with on-chain momentum on asset cards. Swap execution uses the **Uniswap Trading API** from the embedded wallet on **Ethereum Sepolia** (WETH→UNI — the only liquid testnet pair found). Tokenized equities are quote/display only when the API blocks execution (v4 compliance).
 
-**Why it matters:** Trending is not just chatter — we label when social and on-chain signals agree ("confirmed trend" vs narrative-only vs quiet accumulation).
+**Why it matters:** Trending is not just chatter — labeled when social and on-chain signals agree ("confirmed trend" vs narrative-only vs quiet accumulation).
 
 **Files:** `api/uniswap_data.py`, `web/lib/uniswapSwap.ts`, `web/components/SwapButton.tsx`, `web/components/AssetCard.tsx`  
 **Feedback log:** [docs/UNISWAP_FEEDBACK.md](docs/UNISWAP_FEEDBACK.md)
 
 **Submission writeup (Uniswap):**  
-Chatter maps Gemini-extracted tickers to Uniswap market data and renders agreement labels between social and on-chain momentum. We execute real testnet swaps via check_approval → Permit2 → quote → swap (proxied through Cloud Run in production), with txids in SUBMISSION_TXIDS. We logged API gaps (no key-authenticated market REST, Base Sepolia routing dead ends, equity pool blocks) in UNISWAP_FEEDBACK per the team's on-site request.
+Chatter maps Gemini-extracted tickers to Uniswap market data and renders agreement labels between social and on-chain momentum. Execute real testnet swaps via check_approval → Permit2 → quote → swap (proxied through Cloud Run in production), with txids in SUBMISSION_TXIDS. Logged API gaps (no key-authenticated market REST, Base Sepolia routing dead ends, equity pool blocks) in UNISWAP_FEEDBACK per the team's on-site request.
 
 ---
 
 ## ENS — subnames + research brief on mainnet
 
-**What we built:** On payment, the server mints a deterministic subname under **chatterchatter.eth** on **Ethereum mainnet** (e.g. `u4dd10ee5.chatterchatter.eth` from wallet address). After research, the Gemini brief is written to **`com.chatter.brief`** via PublicResolver, then wrapped ownership transfers to the user. UI resolves records live — nothing hard-coded.
+**What was built:** On payment, the server mints a deterministic subname under **chatterchatter.eth** on **Ethereum mainnet** (e.g. `u4dd10ee5.chatterchatter.eth` from wallet address). After research, the Gemini brief is written to **`com.chatter.brief`** via PublicResolver, then wrapped ownership transfers to the user. UI resolves records live — nothing hard-coded.
 
 **Why it matters:** ENS is the account and receipt layer; research portability without a Chatter backend user table.
 
 **Files:** `api/ens.py`, `web/lib/ens.ts`, `web/components/EnsReceipt.tsx`, `api/main.py` (`/ens/mint`, `/ens/brief`)
 
-**Note:** Sepolia v1 registration was closed during the event; we shipped mainnet v1 NameWrapper instead of v2 alpha or CCIP.
+**Note:** Sepolia v1 registration was closed during the event; shipped mainnet v1 NameWrapper instead of v2 alpha or CCIP.
 
 **Submission writeup (ENS):**  
 Chatter mints mainnet subnames under chatterchatter.eth when users pay, publishes their research brief to com.chatter.brief, and transfers ownership so the result is verifiable in the official ENS app. Subnames are wallet-derived receipts, not vanity picks. Server signer publishes records so users don't need mainnet ETH for the write path.
