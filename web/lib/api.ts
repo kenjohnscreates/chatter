@@ -83,6 +83,17 @@ export async function getAssets(tickers: string[]): Promise<OnChainAsset[]> {
   return data.assets;
 }
 
+/** Prefer verified on-chain kind over social extraction (e.g. SPX → SPX6900 crypto). */
+export function resolvedAssetKind(
+  socialKind: Asset["kind"],
+  onChain?: Pick<OnChainAsset, "kind" | "status">,
+): Asset["kind"] {
+  if (onChain?.status === "verified" && onChain.kind !== "unknown") {
+    return onChain.kind;
+  }
+  return socialKind;
+}
+
 export function agreementLabel(
   socialConfidence: number,
   onChainMomentum: number,

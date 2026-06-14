@@ -5,15 +5,18 @@ import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import AssetCard from "@/components/AssetCard";
 import AssetDetail from "@/components/AssetDetail";
 import EnsReceipt from "@/components/EnsReceipt";
-import FlowStepper, { type FlowStage } from "@/components/FlowStepper";
 import Paywall from "@/components/Paywall";
-import ScanPanel, { type ScanStep } from "@/components/ScanPanel";
+import PaymentReceipt from "@/components/PaymentReceipt";
+import ResearchReceipt from "@/components/ResearchReceipt";
+import ResearchProgressBar from "@/components/ResearchProgressBar";
+import { type ScanStep } from "@/components/ScanPanel";
 import TopicCard, { type CardAccent } from "@/components/TopicCard";
 
 const CARD_ACCENTS: CardAccent[] = ["yellow", "orange", "green", "white"];
 import {
   agreementLabel,
   getAssets,
+  resolvedAssetKind,
   postResearch,
   postSummarize,
   type Asset,
@@ -27,11 +30,20 @@ import {
   publishEnsBrief,
   type EnsMintResult,
 } from "@/lib/ens";
+import {
+  DEMO_RESET_ENABLED,
+  clearDemoUnlock,
+  isPaid,
+  markPaid,
+  saveLastPaymentTx,
+} from "@/lib/demoState";
 import type { FlowResult } from "@/lib/flow";
-
-function paidStorageKey(address?: string): string {
-  return `chatter:paid:${(address ?? "anon").toLowerCase()}`;
-}
+import {
+  RESEARCH_LIVE,
+  SIMULATE_RESEARCH_MS,
+  runSimulatedResearch,
+  type SimulationState,
+} from "@/lib/simulateResearch";
 
 const DEMO_KEYWORDS = [
   "restaking",
@@ -81,24 +93,40 @@ export default function ResearchPage() {
   const [ensMint, setEnsMint] = useState<EnsMintResult | null>(null);
   const [ensMinting, setEnsMinting] = useState(false);
   const [ensError, setEnsError] = useState<string | null>(null);
+  const [ensPublishError, setEnsPublishError] = useState<string | null>(null);
+  const [ensPublishing, setEnsPublishing] = useState(false);
+  const [receiptRefreshKey, setReceiptRefreshKey] = useState(0);
   const [onChainByTicker, setOnChainByTicker] = useState<
     Record<string, OnChainAsset>
   >({});
   const [selectedAsset, setSelectedAsset] = useState<string | null>(null);
+  const [simState, setSimState] = useState<SimulationState | null>(null);
+  const [receiptRow, setReceiptRow] = useState<TopicRow | null>(null);
+  const [lastRunCached, setLastRunCached] = useState(true);
+  const [paymentTxHash, setPaymentTxHash] = useState<string | null>(null);
+  const [showPaymentReceipt, setShowPaymentReceipt] = useState(false);
 
   const address = primaryWallet?.address;
   const remintAttempted = useRef(false);
 
   useEffect(() => {
+    remintAttempted.current = false;
+  }, [address]);
+
+  useEffect(() => {
     if (typeof window === "undefined") return;
-    setPaid(window.localStorage.getItem(paidStorageKey(address)) === "1");
-    const stored = window.localStorage.getItem(ensStorageKey(address));
+    setPaid(isPaid(address));
+    const stored = address
+      ? window.localStorage.getItem(ensStorageKey(address))
+      : null;
     if (stored) {
       try {
         setEnsMint(JSON.parse(stored) as EnsMintResult);
       } catch {
-        // ignore corrupt cache
+        setEnsMint(null);
       }
+    } else {
+      setEnsMint(null);
     }
   }, [address]);
 
@@ -129,10 +157,14 @@ export default function ResearchPage() {
   }, [paid, address, ensMint]);
 
   async function handlePaymentSuccess(result: FlowResult) {
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(paidStorageKey(address), "1");
+    remintAttempted.current = true;
+    if (address) {
+      markPaid(address);
+      saveLastPaymentTx(address, result.txHash);
     }
     setPaid(true);
+    setPaymentTxHash(result.txHash);
+    setShowPaymentReceipt(true);
     if (!address) return;
 
     setEnsMinting(true);
@@ -148,6 +180,26 @@ export default function ResearchPage() {
     } finally {
       setEnsMinting(false);
     }
+  }
+
+  function resetDemoPayment() {
+    if (!address) return;
+    const ok = window.confirm(
+      "Reset demo payment? This clears your local unlock and shows the paywall again. You will need to pay $1 USDC on Base Sepolia to continue.",
+    );
+    if (!ok) return;
+    clearDemoUnlock(address);
+    remintAttempted.current = false;
+    setPaid(false);
+    setEnsMint(null);
+    setEnsError(null);
+    setEnsPublishError(null);
+    setPaymentTxHash(null);
+    setShowPaymentReceipt(false);
+    setRows([]);
+    setPhase("idle");
+    setGlobalError(null);
+    setInput("");
   }
 
   const keywords = useMemo(() => parseKeywords(input), [input]);
@@ -197,13 +249,90 @@ export default function ResearchPage() {
     };
   }, [allAssets]);
 
-  async function runResearch() {
-    if (!validCount) return;
+  function buildSlimBrief(summarized: TopicRow[]) {
+    return {
+      topics: summarized
+        .filter((row) => row.summary)
+        .map((row) => ({
+          keyword: row.result.keyword,
+          sentiment: row.summary?.sentiment,
+          momentum_score: row.summary?.momentum_score,
+        })),
+    };
+  }
+
+  async function publishBriefFromRows(summarized: TopicRow[]) {
+    if (!ensMint?.subname || !address || !summarized.some((row) => row.summary)) {
+      return;
+    }
+    setEnsPublishing(true);
+    setEnsPublishError(null);
+    try {
+      await publishEnsBrief({
+        ownerAddress: address,
+        subname: ensMint.subname,
+        brief: buildSlimBrief(summarized),
+      });
+      setReceiptRefreshKey((key) => key + 1);
+    } catch (err) {
+      setEnsPublishError(
+        err instanceof Error ? err.message : "ENS publish failed",
+      );
+    } finally {
+      setEnsPublishing(false);
+    }
+  }
+
+  async function fetchResearchPipeline(
+    kws: string[],
+    useCache: boolean,
+  ): Promise<TopicRow[]> {
+    const { results } = await postResearch(kws, useCache);
+    const nextRows: TopicRow[] = results.map((result) => ({
+      result,
+      status: result.ok ? ("summarizing" as const) : ("error" as const),
+      error: result.ok ? undefined : result.stderr || "Research failed",
+    }));
+
+    return Promise.all(
+      nextRows.map(async (row) => {
+        if (!row.result.ok || !row.result.markdown) return row;
+        try {
+          const summary = await postSummarize(
+            row.result.keyword,
+            row.result.markdown,
+            useCache,
+          );
+          return { ...row, summary, status: "done" as const };
+        } catch (err) {
+          return {
+            ...row,
+            status: "error" as const,
+            error: err instanceof Error ? err.message : "Summarize failed",
+          };
+        }
+      }),
+    );
+  }
+
+  async function runResearch(opts?: {
+    keywords?: string[];
+    forceCached?: boolean;
+  }) {
+    const kws = opts?.keywords ?? keywords;
+    const useCache = opts?.forceCached ?? !RESEARCH_LIVE;
+    const shouldSimulate = useCache && SIMULATE_RESEARCH_MS > 0;
+
+    if (kws.length < 5 || kws.length > 20) return;
 
     setGlobalError(null);
+    setEnsPublishError(null);
+    setLastRunCached(useCache);
     setPhase("running");
+    setSimState(null);
+    setReceiptRow(null);
 
-    const placeholders: TopicRow[] = keywords.map((keyword) => ({
+    const placeholders: TopicRow[] = kws.map((keyword) => ({
       result: {
         keyword,
         ok: false,
@@ -216,67 +345,48 @@ export default function ResearchPage() {
     setRows(placeholders);
 
     try {
-      setRows((prev) =>
-        prev.map((row) => ({ ...row, status: "researching" as const })),
-      );
+      const fetchPromise = fetchResearchPipeline(kws, useCache);
 
-      const { results } = await postResearch(keywords, true);
-
-      const nextRows: TopicRow[] = results.map((result) => ({
-        result,
-        status: result.ok ? ("summarizing" as const) : ("error" as const),
-        error: result.ok ? undefined : result.stderr || "Research failed",
-      }));
-      setRows(nextRows);
-
-      const summarized = await Promise.all(
-        nextRows.map(async (row) => {
-          if (!row.result.ok || !row.result.markdown) return row;
-          try {
-            const summary = await postSummarize(
-              row.result.keyword,
-              row.result.markdown,
-              true,
+      let summarized: TopicRow[];
+      if (shouldSimulate) {
+        const [, result] = await Promise.all([
+          runSimulatedResearch(kws.length, SIMULATE_RESEARCH_MS, (state) => {
+            setSimState(state);
+            setRows((prev) =>
+              prev.map((row, i) => ({
+                ...row,
+                status: state.rowStatuses[i] ?? row.status,
+              })),
             );
-            return { ...row, summary, status: "done" as const };
-          } catch (err) {
-            return {
-              ...row,
-              status: "error" as const,
-              error: err instanceof Error ? err.message : "Summarize failed",
-            };
-          }
-        }),
-      );
+          }),
+          fetchPromise,
+        ]);
+        summarized = result;
+      } else {
+        setRows((prev) =>
+          prev.map((row) => ({ ...row, status: "researching" as const })),
+        );
+        summarized = await fetchPromise;
+      }
 
       setRows(summarized);
+      setSimState(null);
       setPhase("done");
-
-      if (ensMint?.subname && address && summarized.some((row) => row.summary)) {
-        const brief = {
-          topics: summarized
-            .filter((row) => row.summary)
-            .map((row) => ({
-              keyword: row.result.keyword,
-              sentiment: row.summary?.sentiment,
-              momentum_score: row.summary?.momentum_score,
-              themes: row.summary?.themes,
-              assets: row.summary?.assets,
-            })),
-        };
-        await publishEnsBrief({
-          ownerAddress: address,
-          subname: ensMint.subname,
-          brief,
-        });
-      }
+      await publishBriefFromRows(summarized);
     } catch (err) {
       setGlobalError(
         err instanceof Error ? err.message : "Research request failed",
       );
       setPhase("idle");
       setRows([]);
+      setSimState(null);
+      return;
     }
+  }
+
+  async function retryEnsPublish() {
+    if (phase !== "done" || rows.length === 0) return;
+    await publishBriefFromRows(rows);
   }
 
   function loadDemo() {
@@ -284,22 +394,30 @@ export default function ResearchPage() {
     setRows([]);
     setPhase("idle");
     setGlobalError(null);
+    setEnsPublishError(null);
+    setSimState(null);
   }
 
-  const currentStage: FlowStage = !paid
-    ? "paywall"
-    : phase === "running"
-      ? "scanning"
-      : phase === "done" && selectedAsset
-        ? "asset"
-        : phase === "done"
-          ? "dashboard"
-          : "research";
+  function runDemo() {
+    setInput(DEMO_KEYWORDS.join("\n"));
+    void runResearch({ keywords: DEMO_KEYWORDS, forceCached: true });
+  }
+
+  const scanSteps = simState?.scanSteps ?? rowsToScanSteps(rows);
+  const scanProgressValue =
+    simState?.progressPercent ??
+    (scanSteps.length > 0
+      ? (scanSteps.filter((s) => s.status === "done").length / scanSteps.length) *
+        100
+      : 0);
+  const scanLabel =
+    simState?.header ??
+    scanSteps.find((s) => s.status === "active")?.label ??
+    "Scanning…";
 
   if (!paid) {
     return (
       <div className="min-h-full bg-paper text-ink">
-        <FlowStepper current="paywall" />
         <main className="mx-auto max-w-6xl px-6 py-16">
           <Paywall onPaymentSuccess={handlePaymentSuccess} />
         </main>
@@ -307,13 +425,39 @@ export default function ResearchPage() {
     );
   }
 
+  if (showPaymentReceipt && paymentTxHash) {
+    return (
+      <div className="min-h-full bg-paper text-ink">
+        <main className="mx-auto max-w-6xl px-6 py-16">
+          {ensMinting && (
+            <p className="mb-6 text-center text-sm font-medium text-accent-green">
+              Minting your chatterchatter.eth subname on Ethereum&hellip;
+            </p>
+          )}
+          {ensError && (
+            <div
+              role="alert"
+              className="mb-6 mx-auto max-w-md rounded border-2 border-accent-orange/40 bg-accent-orange/5 px-4 py-3 text-sm text-accent-orange"
+            >
+              ENS mint: {ensError}
+            </div>
+          )}
+          <PaymentReceipt
+            txHash={paymentTxHash}
+            ensMint={ensMint}
+            onContinue={() => setShowPaymentReceipt(false)}
+          />
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-full bg-paper text-ink">
-      <FlowStepper current={currentStage} />
       <main className="mx-auto max-w-6xl px-6 py-10">
         {ensMinting && (
           <p className="mb-6 text-center text-sm font-medium text-accent-green">
-            Minting your chatterethglobal.eth subname on Ethereum&hellip;
+            Minting your chatterchatter.eth subname on Ethereum&hellip;
           </p>
         )}
         {ensError && (
@@ -324,15 +468,6 @@ export default function ResearchPage() {
             ENS mint: {ensError}
           </div>
         )}
-        {ensMint && (
-          <div className="mb-10">
-            <EnsReceipt
-              subname={ensMint.subname}
-              ensAppUrl={ensMint.ensAppUrl}
-            />
-          </div>
-        )}
-
         {/* Keyword entry */}
         <section className="rounded border-[3px] border-ink bg-white p-6 hard-shadow-sm">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -345,42 +480,71 @@ export default function ResearchPage() {
                 AI chips)
               </p>
             </div>
-            <button
-              type="button"
-              onClick={loadDemo}
-              className="rounded border-2 border-ink px-3 py-1.5 text-sm font-bold transition hover:bg-ink hover:text-white"
-            >
-              Try demo keywords
-            </button>
+            <div className="flex flex-wrap gap-2">
+              {DEMO_RESET_ENABLED && (
+                <button
+                  type="button"
+                  onClick={resetDemoPayment}
+                  className="rounded border-2 border-ink/30 px-3 py-1.5 text-sm font-medium text-ink/50 transition hover:border-signal hover:text-signal"
+                >
+                  Reset payment (demo)
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={loadDemo}
+                disabled={phase === "running"}
+                className="rounded border-2 border-ink px-3 py-1.5 text-sm font-bold transition hover:bg-ink hover:text-white disabled:opacity-40"
+              >
+                Load demo keywords
+              </button>
+              <button
+                type="button"
+                disabled={phase === "running" || ensMinting}
+                onClick={runDemo}
+                className="rounded border-2 border-signal bg-signal px-3 py-1.5 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-40"
+              >
+                Run demo
+              </button>
+            </div>
           </div>
 
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
             rows={6}
+            disabled={phase === "running"}
             placeholder={"restaking\nNvidia AI chips\nsolana"}
-            className="mt-4 w-full resize-y rounded border-2 border-ink/20 bg-paper px-4 py-3 font-mono text-sm text-ink placeholder:text-ink/30 focus:border-ink focus:outline-none"
+            className="mt-4 w-full resize-y rounded border-2 border-ink/20 bg-paper px-4 py-3 font-mono text-sm text-ink placeholder:text-ink/30 focus:border-ink focus:outline-none disabled:opacity-60"
           />
 
-          <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+          <div className="mt-3 flex flex-wrap items-center gap-3">
             <span
-              className={`font-mono text-sm ${validCount ? "text-ink/50" : "text-signal font-bold"}`}
+              className={`shrink-0 font-mono text-sm ${validCount ? "text-ink/50" : "text-signal font-bold"}`}
             >
               {count}/20 keywords
               {count > 0 && count < 5 && " — need at least 5"}
               {count > 20 && " — max 20"}
             </span>
+            {phase === "running" && (
+              <ResearchProgressBar
+                progressPercent={scanProgressValue}
+                label={scanLabel}
+              />
+            )}
             <button
               type="button"
-              disabled={!validCount || phase === "running"}
-              onClick={runResearch}
-              className="rounded border-[3px] border-ink bg-signal px-5 py-2.5 font-display text-sm font-bold text-white transition hover:translate-x-0.5 hover:translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-40"
+              disabled={!validCount || phase === "running" || ensMinting}
+              onClick={() => void runResearch()}
+              className={`shrink-0 rounded border-[3px] border-ink bg-signal px-5 py-2.5 font-display text-sm font-bold text-white transition hover:translate-x-0.5 hover:translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-40 ${phase !== "running" ? "ml-auto" : ""}`}
             >
               {phase === "running" ? "Running research…" : "Run research"}
             </button>
           </div>
           <p className="mt-2 font-mono text-[10px] text-ink/40">
-            ~1 min per topic; demo topics are instant (cached).
+            {RESEARCH_LIVE
+              ? "Live search — about 1 min per keyword."
+              : `Demo uses pre-indexed results; inline bar simulates ~${Math.round(SIMULATE_RESEARCH_MS / 1000)}s pacing.`}
           </p>
         </section>
 
@@ -392,22 +556,12 @@ export default function ResearchPage() {
             <strong className="font-bold">Error:</strong> {globalError}
             <button
               type="button"
-              onClick={runResearch}
+              onClick={() => void runResearch()}
               disabled={!validCount}
               className="ml-3 underline hover:text-ink disabled:opacity-40"
             >
               Retry
             </button>
-          </div>
-        )}
-
-        {/* Scanning panel */}
-        {phase === "running" && (
-          <div className="mt-10">
-            <ScanPanel
-              steps={rowsToScanSteps(rows)}
-              estimateSeconds={rows.length * 4}
-            />
           </div>
         )}
 
@@ -427,6 +581,7 @@ export default function ResearchPage() {
                     status={row.status}
                     error={row.error}
                     accent={CARD_ACCENTS[i % CARD_ACCENTS.length]}
+                    onReceiptClick={() => setReceiptRow(row)}
                   />
                 ))}
               </div>
@@ -442,12 +597,13 @@ export default function ResearchPage() {
                     const onChain = onChainByTicker[asset.ticker.toUpperCase()];
                     const momentum = onChain?.momentum_score ?? 0;
                     const delta = onChain?.price_change_24h ?? 0;
+                    const kind = resolvedAssetKind(asset.kind, onChain);
                     return (
                       <AssetCard
                         key={asset.ticker}
                         ticker={asset.ticker}
                         name={onChain?.name ?? asset.name}
-                        kind={asset.kind}
+                        kind={kind}
                         confidence={asset.confidence}
                         onChainMomentum={momentum}
                         priceDeltaPercent={delta}
@@ -456,7 +612,7 @@ export default function ResearchPage() {
                           momentum,
                         )}
                         swapEnabled={
-                          asset.kind === "crypto" &&
+                          kind === "crypto" &&
                           onChain?.status === "verified"
                         }
                         priceUsd={onChain?.price ?? null}
@@ -477,24 +633,65 @@ export default function ResearchPage() {
           const onChain = onChainByTicker[asset.ticker.toUpperCase()];
           const momentum = onChain?.momentum_score ?? 0;
           const delta = onChain?.price_change_24h ?? 0;
+          const kind = resolvedAssetKind(asset.kind, onChain);
           const summary = summaryByKeyword[asset.keyword];
           return (
             <AssetDetail
               ticker={asset.ticker}
               name={onChain?.name ?? asset.name}
-              kind={asset.kind}
+              kind={kind}
               socialScore={Math.round(asset.confidence * 100)}
               onChainMomentum={momentum}
               priceDeltaPercent={delta}
               agreementLabel={agreementLabel(asset.confidence, momentum)}
               themes={summary?.themes}
               sentiment={summary?.sentiment}
-              swapEnabled={asset.kind === "crypto" && onChain?.status === "verified"}
+              swapEnabled={kind === "crypto" && onChain?.status === "verified"}
               priceUsd={onChain?.price ?? null}
               onClose={() => setSelectedAsset(null)}
             />
           );
         })()}
+
+        {ensMint && (
+          <div className="mt-16">
+            <EnsReceipt
+              subname={ensMint.subname}
+              ensAppUrl={ensMint.ensAppUrl}
+              refreshKey={receiptRefreshKey}
+            />
+            {ensPublishing && (
+              <p className="mt-3 text-center text-sm text-ink/50">
+                Publishing research to ENS&hellip;
+              </p>
+            )}
+            {ensPublishError && (
+              <div
+                role="alert"
+                className="mt-4 rounded border-2 border-signal/40 bg-signal/5 px-4 py-3 text-sm text-signal"
+              >
+                <strong className="font-bold">ENS publish:</strong> {ensPublishError}
+                <button
+                  type="button"
+                  onClick={() => void retryEnsPublish()}
+                  disabled={ensPublishing || phase !== "done"}
+                  className="ml-3 underline hover:text-ink disabled:opacity-40"
+                >
+                  Retry ENS publish
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {receiptRow && (
+          <ResearchReceipt
+            result={receiptRow.result}
+            summary={receiptRow.summary}
+            preIndexed={lastRunCached}
+            onClose={() => setReceiptRow(null)}
+          />
+        )}
       </main>
     </div>
   );

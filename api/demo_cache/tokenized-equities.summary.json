@@ -9,10 +9,10 @@
   "momentum_score": 74,
   "assets": [
     {
-      "ticker": "SPX",
-      "name": "SpaceX",
+      "ticker": "NVDA",
+      "name": "NVIDIA",
       "kind": "equity",
-      "confidence": 0.7
+      "confidence": 0.85
     }
   ]
 }

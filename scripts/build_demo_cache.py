@@ -1,6 +1,6 @@
 # Demo cache builder for Chatter (T3).
-# Runs T1 run_research() over DEMO_KEYWORDS and writes api/demo_cache/<slug>.json.
-# Re-runnable — overwrites existing files. Never call live during demos.
+# Runs last30days scrape + Gemini summarize; writes api/demo_cache/<slug>.json + .summary.json.
+# Re-runnable — overwrites existing files.
 
 import json
 import re
@@ -9,6 +9,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from api.gemini import summarize_markdown
 from core.research import run_research
 
 # --- edit this list freely ---
@@ -32,8 +33,20 @@ def _slug(keyword: str) -> str:
 
 for kw in DEMO_KEYWORDS:
     result = run_research(kw)
-    path = CACHE_DIR / f"{_slug(kw)}.json"
+    slug = _slug(kw)
+    path = CACHE_DIR / f"{slug}.json"
     with path.open("w", encoding="utf-8") as f:
         json.dump(result, f, ensure_ascii=False, indent=2)
     status = "ok" if result.get("ok") else f"FAIL({result.get('exit_code')})"
     print(f"{status:6}  {kw}  ->  {path.name}")
+
+    if result.get("ok") and result.get("markdown"):
+        summary = summarize_markdown(
+            str(result["markdown"]),
+            keyword=kw,
+            use_cache=False,
+        )
+        summary_path = CACHE_DIR / f"{slug}.summary.json"
+        with summary_path.open("w", encoding="utf-8") as f:
+            json.dump(summary, f, ensure_ascii=False, indent=2)
+        print(f"       summarize -> {summary_path.name}")
