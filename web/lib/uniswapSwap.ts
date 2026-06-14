@@ -4,7 +4,13 @@
 // liquidity for our key; see docs/UNISWAP_FEEDBACK.md). Quote path also serves the
 // disabled tokenized-equity case, which the API itself blocks ("Token is blocked").
 
-import { encodeFunctionData, formatUnits, parseAbi } from "viem";
+import {
+  encodeFunctionData,
+  formatEther,
+  formatUnits,
+  parseAbi,
+  parseEther,
+} from "viem";
 import type { PaymentPublicClient, PaymentWalletClient } from "@/lib/flow";
 
 const TRADING_API = "https://trade-api.gateway.uniswap.org/v1";
@@ -22,9 +28,24 @@ const SEPOLIA_OUT: Record<string, { address: `0x${string}`; symbol: string }> = 
   UNI: { address: UNI_SEPOLIA, symbol: "UNI" },
 };
 
-// 0.001 WETH — small, faucet-friendly input amount (18 decimals).
-export const SWAP_INPUT_WEI = BigInt("1000000000000000");
-export const SWAP_INPUT_LABEL = "0.001 WETH";
+// Default input is small so faucet-funded Sepolia wallets can swap + pay gas.
+export const SWAP_DEFAULT_ETH = "0.0001";
+export const SWAP_MIN_ETH = "0.00001";
+export const SWAP_MAX_ETH = "1";
+const GAS_BUFFER_WEI = parseEther("0.0003");
+
+export function parseSwapAmount(eth: string): bigint {
+  const trimmed = eth.trim();
+  if (!trimmed || !/^\d*\.?\d+$/.test(trimmed)) {
+    throw new Error("Enter a valid ETH amount.");
+  }
+  const wei = parseEther(trimmed);
+  const min = parseEther(SWAP_MIN_ETH);
+  const max = parseEther(SWAP_MAX_ETH);
+  if (wei < min) throw new Error(`Minimum swap is ${SWAP_MIN_ETH} ETH.`);
+  if (wei > max) throw new Error(`Maximum swap is ${SWAP_MAX_ETH} ETH.`);
+  return wei;
+}
 
 // signTypedData (Permit2) + readContract (WETH balance) on top of the shared clients.
 export interface SwapWalletClient extends PaymentWalletClient {
@@ -42,6 +63,7 @@ export interface SwapPublicClient extends PaymentPublicClient {
     functionName: string;
     args: unknown[];
   }) => Promise<unknown>;
+  getBalance: (args: { address: `0x${string}` }) => Promise<bigint>;
 }
 
 export type SwapStatus =
@@ -111,6 +133,7 @@ function resolveOut(ticker: string): {
 export async function getSwapQuote(
   ticker: string,
   swapper: string,
+  amountWei: bigint,
 ): Promise<{ outAmount: string; outSymbol: string; isDemoProxy: boolean }> {
   const out = resolveOut(ticker);
   const q = await tradeFetch<QuoteResponse>("/quote", {
@@ -119,7 +142,7 @@ export async function getSwapQuote(
     tokenOutChainId: SWAP_CHAIN_ID,
     tokenIn: WETH_SEPOLIA,
     tokenOut: out.address,
-    amount: SWAP_INPUT_WEI.toString(),
+    amount: amountWei.toString(),
     swapper,
   });
   const raw = q.quote.output?.amount ?? "0";
@@ -130,16 +153,46 @@ export async function getSwapQuote(
   };
 }
 
+async function ensureSwapFunds(
+  swapper: `0x${string}`,
+  amountWei: bigint,
+  publicClient: SwapPublicClient,
+): Promise<void> {
+  const [wethBalance, ethBalance] = await Promise.all([
+    publicClient.readContract({
+      address: WETH_SEPOLIA,
+      abi: WETH_ABI,
+      functionName: "balanceOf",
+      args: [swapper],
+    }) as Promise<bigint>,
+    publicClient.getBalance({ address: swapper }),
+  ]);
+  const wrapNeeded = amountWei > wethBalance ? amountWei - wethBalance : BigInt(0);
+  const totalNeeded = wrapNeeded + GAS_BUFFER_WEI;
+  if (ethBalance < totalNeeded) {
+    const have = formatEther(ethBalance);
+    const need = formatEther(totalNeeded);
+    throw new Error(
+      `Insufficient Sepolia ETH. You have ${have} ETH but need ~${need} ETH ` +
+        `(swap amount + gas). Get test ETH from a Sepolia faucet.`,
+    );
+  }
+}
+
 // Full execution: wrap (if needed) -> approve Permit2 -> quote -> sign -> swap -> send.
 export async function executeSwap(params: {
   ticker: string;
   swapper: `0x${string}`;
+  amountWei: bigint;
   walletClient: SwapWalletClient;
   publicClient: SwapPublicClient;
   onStatus?: (s: SwapStatus) => void;
 }): Promise<SwapResult> {
-  const { ticker, swapper, walletClient, publicClient, onStatus } = params;
+  const { ticker, swapper, amountWei, walletClient, publicClient, onStatus } =
+    params;
   const out = resolveOut(ticker);
+
+  await ensureSwapFunds(swapper, amountWei, publicClient);
 
   // 1. Ensure the wallet holds enough WETH; wrap native ETH if short.
   const balance = (await publicClient.readContract({
@@ -148,12 +201,12 @@ export async function executeSwap(params: {
     functionName: "balanceOf",
     args: [swapper],
   })) as bigint;
-  if (balance < SWAP_INPUT_WEI) {
+  if (balance < amountWei) {
     onStatus?.("wrapping");
     const wrapHash = await walletClient.sendTransaction({
       to: WETH_SEPOLIA,
       data: encodeFunctionData({ abi: WETH_ABI, functionName: "deposit" }),
-      value: SWAP_INPUT_WEI - balance,
+      value: amountWei - balance,
     });
     await publicClient.waitForTransactionReceipt({ hash: wrapHash });
   }
@@ -164,7 +217,7 @@ export async function executeSwap(params: {
     "/check_approval",
     {
       walletAddress: swapper,
-      amount: SWAP_INPUT_WEI.toString(),
+      amount: amountWei.toString(),
       token: WETH_SEPOLIA,
       chainId: SWAP_CHAIN_ID,
     },
@@ -185,7 +238,7 @@ export async function executeSwap(params: {
     tokenOutChainId: SWAP_CHAIN_ID,
     tokenIn: WETH_SEPOLIA,
     tokenOut: out.address,
-    amount: SWAP_INPUT_WEI.toString(),
+    amount: amountWei.toString(),
     swapper,
   });
 

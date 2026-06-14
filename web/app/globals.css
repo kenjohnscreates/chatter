@@ -1,18 +1,259 @@
 @import "tailwindcss";
 
 :root {
-  --background: #09090b;
-  --foreground: #fafafa;
+  --background: #efe9e0;
+  --foreground: #111;
+  --paper: #efe9e0;
+  --ink: #111;
+  --signal: #f0503c;
+  --pink: #f4a6c8;
+  /* vivid tile fills (Apple-keynote color-block look) */
+  --accent-green: #2ec27e;
+  --accent-orange: #ff7a1a;
+  --accent-yellow: #f5c518;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+  --color-signal: var(--signal);
+  --color-pink: var(--pink);
+  --color-accent-green: var(--accent-green);
+  --color-accent-orange: var(--accent-orange);
+  --color-accent-yellow: var(--accent-yellow);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-archivo);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
+}
+
+/* Utility: hard offset shadow */
+.hard-shadow {
+  box-shadow: 6px 6px 0px var(--ink);
+}
+.hard-shadow-sm {
+  box-shadow: 3px 3px 0px var(--ink);
+}
+
+/* Utility: retro window chrome (coral title bar + traffic lights) */
+.win-chrome {
+  border: 3px solid var(--ink);
+  border-radius: 16px;
+  overflow: hidden;
+}
+.win-chrome-bar {
+  background: #f0503c;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 3px solid var(--ink);
+}
+.win-chrome-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--ink);
+}
+.win-chrome-dot--red { background: var(--signal); }
+.win-chrome-dot--yellow { background: var(--accent-yellow); }
+.win-chrome-dot--green { background: var(--accent-green); }
+
+/* Utility: dotted background pattern */
+.dotted-bg {
+  background-image: radial-gradient(circle, var(--ink) 1.2px, transparent 1.2px);
+  background-size: 20px 20px;
+}
+
+/* Utility: dotted pattern in white (for coral fields, mockup "Scanning" screen) */
+.dotted-bg-light {
+  background-image: radial-gradient(circle, rgba(0, 0, 0, 0.28) 2px, transparent 2px);
+  background-size: 26px 26px;
+}
+
+/* Utility: speckled paper texture for the landing field */
+.paper-texture {
+  background-color: var(--paper);
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(0, 0, 0, 0.04) 0.5px, transparent 0.6px),
+    radial-gradient(circle at 70% 60%, rgba(0, 0, 0, 0.05) 0.5px, transparent 0.6px),
+    radial-gradient(circle at 40% 80%, rgba(240, 80, 60, 0.05) 0.5px, transparent 0.6px),
+    radial-gradient(circle, #f0503c 2.1px, transparent 2.15px);
+  background-size: 7px 7px, 11px 11px, 13px 13px, 14px 14px;
+}
+
+/* Utility: striped progress bar fill */
+.striped-bar {
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--signal),
+    var(--signal) 8px,
+    #ffd6cc 8px,
+    #ffd6cc 16px
+  );
+}
+
+/* Utility: halftone overlay (for decorative panels) */
+.halftone {
+  background-image: radial-gradient(circle, var(--ink) 1px, transparent 1px);
+  background-size: 6px 6px;
+  opacity: 0.06;
+}
+
+/* Landing hero stickers — light stop-motion jitter */
+@keyframes sticker-motion-megaphone {
+  0% { transform: rotate(-12deg) translate(0, 0); }
+  25% { transform: rotate(-7deg) translate(10px, -12px); }
+  50% { transform: rotate(-16deg) translate(-8px, 8px); }
+  75% { transform: rotate(-9deg) translate(6px, 10px); }
+  100% { transform: rotate(-12deg) translate(0, 0); }
+}
+
+@keyframes sticker-motion-phone {
+  0% { transform: rotate(6deg) translate(0, 0); }
+  25% { transform: rotate(11deg) translate(-8px, -10px); }
+  50% { transform: rotate(2deg) translate(10px, 6px); }
+  75% { transform: rotate(8deg) translate(-5px, 8px); }
+  100% { transform: rotate(6deg) translate(0, 0); }
+}
+
+@keyframes sticker-motion-woman {
+  0% { transform: rotate(3deg) translate(0, 0); }
+  25% { transform: rotate(8deg) translate(8px, -8px); }
+  50% { transform: rotate(-2deg) translate(-10px, 6px); }
+  75% { transform: rotate(5deg) translate(6px, 10px); }
+  100% { transform: rotate(3deg) translate(0, 0); }
+}
+
+@keyframes sticker-motion-lips {
+  0% { transform: rotate(-6deg) translate(0, 0) scale(1); }
+  20% { transform: rotate(-3deg) translate(6px, -6px) scale(1.06); }
+  40% { transform: rotate(-9deg) translate(-6px, 5px) scale(0.94); }
+  60% { transform: rotate(-4deg) translate(8px, 4px) scale(1.05); }
+  80% { transform: rotate(-8deg) translate(-4px, -8px) scale(0.97); }
+  100% { transform: rotate(-6deg) translate(0, 0) scale(1); }
+}
+
+.sticker-motion--megaphone {
+  animation-name: sticker-motion-megaphone;
+  animation-duration: 2.8s;
+  animation-timing-function: steps(4, end);
+  animation-iteration-count: infinite;
+}
+
+.sticker-motion--phone {
+  animation-name: sticker-motion-phone;
+  animation-duration: 3.2s;
+  animation-timing-function: steps(4, end);
+  animation-iteration-count: infinite;
+  animation-delay: 0.5s;
+}
+
+.sticker-motion--woman {
+  animation-name: sticker-motion-woman;
+  animation-duration: 3s;
+  animation-timing-function: steps(4, end);
+  animation-iteration-count: infinite;
+  animation-delay: 1s;
+}
+
+.sticker-motion--lips {
+  animation-name: sticker-motion-lips;
+  animation-duration: 2.4s;
+  animation-timing-function: steps(5, end);
+  animation-iteration-count: infinite;
+  animation-delay: 1.5s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sticker-motion--megaphone,
+  .sticker-motion--phone,
+  .sticker-motion--woman,
+  .sticker-motion--lips {
+    animation: none;
+  }
+}
+
+/* Dynamic auth modal — Chatter brand (targets shadow-DOM host) */
+.dynamic-shadow-dom {
+  --dynamic-font-family-primary: var(--font-archivo), "Archivo", system-ui, sans-serif;
+  --dynamic-font-family-numbers: var(--font-geist-mono), ui-monospace, monospace;
+
+  --dynamic-base-1: #efe9e0;
+  --dynamic-base-2: #efe9e0;
+  --dynamic-base-3: #ffffff;
+  --dynamic-base-4: #ffffff;
+  --dynamic-base-5: #f4a6c8;
+
+  --dynamic-brand-primary-color: #f0503c;
+  --dynamic-brand-hover-color: linear-gradient(0deg, rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.08)), #f0503c;
+  --dynamic-brand-secondary-color: rgba(244, 166, 200, 0.45);
+
+  --dynamic-connection-green: #2ec27e;
+  --dynamic-border-radius: 12px;
+  --dynamic-hover: rgba(240, 80, 60, 0.08);
+
+  --dynamic-error-1: #f0503c;
+  --dynamic-error-2: rgba(240, 80, 60, 0.12);
+
+  --dynamic-footer-background-color: #efe9e0;
+  --dynamic-footer-text-color: #111;
+  --dynamic-footer-icon-color: #111;
+
+  --dynamic-overlay: rgba(17, 17, 17, 0.35);
+
+  --dynamic-shadow-down-1: 0px 3px 0px #efe9e0;
+  --dynamic-shadow-down-2: 0px 4px 0px #111111;
+  --dynamic-shadow-down-3: 0px 6px 0px #111111;
+  --dynamic-shadow-up-1: 0px -8px 48px -8px rgba(17, 17, 17, 0.12);
+
+  --dynamic-text-link: #f0503c;
+  --dynamic-text-primary: #111;
+  --dynamic-text-secondary: #111;
+  --dynamic-text-tertiary: rgba(17, 17, 17, 0.55);
+  --dynamic-text-size-title: 20px;
+
+  --dynamic-badge-background: #111;
+  --dynamic-badge-color: #fff;
+  --dynamic-badge-primary-background: #f0503c;
+  --dynamic-badge-primary-color: #fff;
+
+  --dynamic-search-bar-background: #efe9e0;
+  --dynamic-search-bar-background-hover: #efe9e0;
+  --dynamic-search-bar-background-focus: #fff;
+  --dynamic-search-bar-border: 2px solid #111;
+  --dynamic-search-bar-border-hover: 2px solid #111;
+  --dynamic-search-bar-border-focus: 2px solid #111;
+
+  --dynamic-modal-border: 3px solid #111;
+  --dynamic-modal-width: 22.5rem;
+  --dynamic-modal-padding: 1.5rem;
+
+  --dynamic-footer-padding: 1.25rem 1.5rem;
+  --dynamic-footer-border: 2px solid #111;
+
+  --dynamic-wallet-list-tile-background: #fff;
+  --dynamic-wallet-list-tile-border: 2px solid #111;
+  --dynamic-wallet-list-tile-shadow: 0px 3px 0px #111;
+  --dynamic-wallet-list-tile-background-hover: #f4a6c8;
+  --dynamic-wallet-list-tile-border-hover: 2px solid #111;
+  --dynamic-wallet-list-tile-shadow-hover: 0px 3px 0px #111;
+
+  --dynamic-connect-button-background: #fff;
+  --dynamic-connect-button-color: #111;
+  --dynamic-connect-button-border: 2px solid #111;
+  --dynamic-connect-button-shadow: 0px 3px 0px #111;
+  --dynamic-connect-button-background-hover: #f4a6c8;
+  --dynamic-connect-button-color-hover: #111;
+  --dynamic-connect-button-border-hover: 2px solid #111;
+  --dynamic-connect-button-shadow-hover: 0px 2px 0px #111;
+
+  --dynamic-tooltip-color: #111;
+  --dynamic-tooltip-text-color: #fff;
 }
