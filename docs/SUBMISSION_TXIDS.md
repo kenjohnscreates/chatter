@@ -7,12 +7,13 @@ prize verification (Uniswap requires real txids demonstrating onchain execution)
 
 - Chain: **Base Sepolia** (chainId 84532)
 - Flow: server `POST /checkout` → client Flow SDK (`createCheckoutTransaction` → quote → submit) → USDC settlement to treasury.
+- **Demo embedded wallet** (pays Flow from the UI): [`0x4dd10ee52DF7371C80A503bb76f5dB3Ef73C8708`](https://sepolia.basescan.org/address/0x4dd10ee52DF7371C80A503bb76f5dB3Ef73C8708) — fund with Base Sepolia USDC before live demos.
 
 | Date | Step | Tx hash | Explorer |
 |------|------|---------|----------|
 | 2026-06-13 | **Flow payment** ($1 unlock) | `0xe2f2983f699ce9ae44efc223d380c1e8e5e1be536ce1d749a5c2a4743b202ad2` | https://sepolia.basescan.org/tx/0xe2f2983f699ce9ae44efc223d380c1e8e5e1be536ce1d749a5c2a4743b202ad2 |
 
-> Explorer base: https://sepolia.basescan.org/tx/&lt;hash&gt;
+> Explorer base: https://sepolia.basescan.org/tx/&lt;hash&gt; · [address](https://sepolia.basescan.org/address/0x4dd10ee52DF7371C80A503bb76f5dB3Ef73C8708)
 
 ## Uniswap Trading API — swap execution (T10)
 

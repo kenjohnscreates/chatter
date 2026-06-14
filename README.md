@@ -19,7 +19,7 @@ Built for **[ETHGlobal New York 2026](https://ethglobal.com/)** (Extend Open Sou
 | FastAPI + demo cache + Gemini briefs | Done |
 | Next.js web app (landing, research, dashboard) | Done |
 | Dynamic login + embedded wallets | Done |
-| Flow $1 paywall (Base Sepolia) | Done |
+| Flow $1 paywall (Base Sepolia) | Done — [txid + wallet](docs/SUBMISSION_TXIDS.md#dynamic-flow--1-paywall-t7) |
 | Uniswap market data + tokenized equity badges | Done |
 | Uniswap testnet swap (Sepolia WETH→UNI) | Done — [txids](docs/SUBMISSION_TXIDS.md) |
 | ENS mainnet subnames (`*.chatterchatter.eth`) + brief records | Done — [txids](docs/SUBMISSION_TXIDS.md) |
@@ -45,7 +45,7 @@ Built for **[ETHGlobal New York 2026](https://ethglobal.com/)** (Extend Open Sou
 
 **Demo reset (same funded wallet):** DevTools → Application → Local Storage → delete `chatter:paid:*`, `chatter:ens:*`, `chatter:lastPaymentTx:*` for your address, then reload. Local dev has a **Reset payment (demo)** button.
 
-**Pre-fund embedded wallet:** Base Sepolia USDC (~$1 per paywall run) + Ethereum Sepolia ETH (swap gas).
+**Pre-fund embedded wallet:** Base Sepolia USDC (~$1 per paywall run) + Ethereum Sepolia ETH (swap gas). Demo payer wallet on [Base Sepolia](https://sepolia.basescan.org/address/0x4dd10ee52DF7371C80A503bb76f5dB3Ef73C8708) (see [SUBMISSION_TXIDS](docs/SUBMISSION_TXIDS.md)).
 
 ---
 
