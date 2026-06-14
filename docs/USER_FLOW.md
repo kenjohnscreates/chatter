@@ -66,7 +66,7 @@ Can be a success panel on S2 rather than its own screen.
 - Helper examples: "restaking", "Nvidia AI chips", "prediction markets" (mix crypto + company topics — shows tokenized equity support)
 - Quick-fill: **Load demo keywords** (textarea only) or **Run demo** (loads + runs cached pipeline with ~10s simulated scan)
 - CTA: **Run research** — cached by default; set `NEXT_PUBLIC_RESEARCH_LIVE=true` for live scrape
-- Per-topic **Research receipt** (proof: last30days sources + Gemini brief). See [VIDEO_DEMO.md](VIDEO_DEMO.md).
+- Per-topic **Research receipt** (proof: last30days sources + Gemini brief).
 
 ## S4 — Progress
 

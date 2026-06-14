@@ -4,8 +4,7 @@ Plain-English guide for judges and submission forms. One paragraph per integrati
 
 **Demo path:** sign in → pay $1 → run research → topic + asset cards → swap (crypto) → ENS receipt at bottom.
 
-**On-chain proof:** [docs/SUBMISSION_TXIDS.md](docs/SUBMISSION_TXIDS.md)  
-**Video script:** [docs/VIDEO_DEMO.md](docs/VIDEO_DEMO.md)
+**On-chain proof:** [docs/SUBMISSION_TXIDS.md](docs/SUBMISSION_TXIDS.md)
 
 ---
 

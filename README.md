@@ -21,14 +21,14 @@ Built for **[ETHGlobal New York 2026](https://ethglobal.com/)** (Extend Open Sou
 | Uniswap market data + tokenized equity badges | Done |
 | Uniswap testnet swap (Sepolia WETH→UNI) | Done — [txids](docs/SUBMISSION_TXIDS.md) |
 | ENS mainnet subnames (`*.chatterchatter.eth`) + brief records | Done — [txids](docs/SUBMISSION_TXIDS.md) |
-| Demo video (local screen) | Done — [script](docs/VIDEO_DEMO.md) |
-| Production deploy | Pending |
+| Demo video (local screen) | Done |
+| Production deploy | In progress — [docs/DEPLOY.md](docs/DEPLOY.md) |
 
 **Quick links**
 
 - [EXPLAINER.md](EXPLAINER.md) — one paragraph per integration (submission copy)
-- [docs/VIDEO_DEMO.md](docs/VIDEO_DEMO.md) — narration, WOW points, judging prep
-- [docs/SUBMISSION_TXIDS.md](docs/SUBMISSION_TXIDS.md) — Uniswap + ENS transaction hashes
+- [docs/SUBMISSION_TXIDS.md](docs/SUBMISSION_TXIDS.md) — Flow, Uniswap, and ENS transaction hashes
+- [docs/DEPLOY.md](docs/DEPLOY.md) — Cloud Run + Vercel deploy steps
 - [docs/UNISWAP_FEEDBACK.md](docs/UNISWAP_FEEDBACK.md) — API feedback for Uniswap team
 - [docs/PRD.md](docs/PRD.md) — task breakdown and acceptance criteria
 - [docs/USER_FLOW.md](docs/USER_FLOW.md) — screen-by-screen demo path
@@ -64,7 +64,7 @@ cp .env.local.example .env.local   # Dynamic env ID, API URL, feature flags
 npm install && npm run dev
 ```
 
-Open http://localhost:3000. See [docs/VIDEO_DEMO.md](docs/VIDEO_DEMO.md) for demo reset / paywall skip.
+Open http://localhost:3000. Use **Reset payment (demo)** on the keyword screen to re-record the paywall.
 
 ---
 

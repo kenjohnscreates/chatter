@@ -3,6 +3,17 @@
 On-chain transactions produced by Chatter during the hackathon, for sponsor
 prize verification (Uniswap requires real txids demonstrating onchain execution).
 
+## Dynamic Flow — $1 paywall (T7)
+
+- Chain: **Base Sepolia** (chainId 84532)
+- Flow: server `POST /checkout` → client Flow SDK (`createCheckoutTransaction` → quote → submit) → USDC settlement to treasury.
+
+| Date | Step | Tx hash | Explorer |
+|------|------|---------|----------|
+| 2026-06-13 | **Flow payment** ($1 unlock) | `0xe2f2983f699ce9ae44efc223d380c1e8e5e1be536ce1d749a5c2a4743b202ad2` | https://sepolia.basescan.org/tx/0xe2f2983f699ce9ae44efc223d380c1e8e5e1be536ce1d749a5c2a4743b202ad2 |
+
+> Explorer base: https://sepolia.basescan.org/tx/&lt;hash&gt;
+
 ## Uniswap Trading API — swap execution (T10)
 
 - Chain: **Ethereum Sepolia** (chainId 11155111)
