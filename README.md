@@ -6,7 +6,7 @@ Chatter is a Go-To-Market mindshare tool: enter keywords, see where conversation
 
 Built for **[ETHGlobal New York 2026](https://ethglobal.com/)** (Extend Open Source / Continuity). Partner integrations: **Dynamic**, **Uniswap**, **ENS**.
 
-**Live demo:** [Loom](https://www.loom.com/share/51af84da07b84e2892fa58e55d2ea0d5)) · API: [Cloud Run](https://chatter-api-mzhygltoda-uc.a.run.app)
+**Live demo:** [Loom](https://www.loom.com/share/51af84da07b84e2892fa58e55d2ea0d5) · API: [Cloud Run](https://chatter-api-mzhygltoda-uc.a.run.app)
 
 ---
 
