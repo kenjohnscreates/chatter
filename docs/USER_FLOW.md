@@ -1,4 +1,3 @@
-<img width="1381" height="855" alt="Screenshot 2026-06-14 at 4 52 40 AM" src="https://github.com/user-attachments/assets/d243c401-6b53-4f48-92fd-d9f6f56b8bd2" />
 # Chatter — User Flow & Screen Outline
 
 Design reference for frontend work (Variant/Canva). Desktop-first; the demo video follows this exact path top to bottom.
@@ -23,7 +22,7 @@ User states to design for: logged out → logged in/unpaid → paid/no research 
 ---
 
 ## S0 — Landing
-
+<img width="1381" height="855" alt="Screenshot 2026-06-14 at 4 52 40 AM" src="https://github.com/user-attachments/assets/d243c401-6b53-4f48-92fd-d9f6f56b8bd2" />
 Goal: explain the product in 5 seconds, push to one CTA.
 
 - Hero: name + one-liner: "See where the chatter is. Pay $1. Act on the trend."
