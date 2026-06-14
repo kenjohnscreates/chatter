@@ -2,6 +2,19 @@
 
 T11: public URL for judges — login → cached research → dashboard → swap → ENS.
 
+## Live deployment
+
+| Service | URL |
+|---------|-----|
+| **Web** (Vercel) | https://chatterethglobal.vercel.app |
+| **API** (Cloud Run) | https://chatter-api-mzhygltoda-uc.a.run.app |
+
+GCP project: `chatter-eth-global` · region: `us-central1` · CORS locked to the Vercel origin.
+
+Health check: `curl -s "https://chatter-api-mzhygltoda-uc.a.run.app/assets?tickers=ETH"`
+
+---
+
 ## Architecture
 
 | Service | Host | Notes |

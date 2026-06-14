@@ -11,7 +11,7 @@
 **Track:** Extend Open Source (Continuity)  
 **Window:** Fri evening → Sun 9:00am EDT = 16h build + 2h video/docs  
 **Partner prize selections (cap of 3):** Dynamic, Uniswap, ENS  
-**Status:** Planned — build starts at the event. See [README](../README.md#current-status).
+**Status:** Shipped — live at [chatterethglobal.vercel.app](https://chatterethglobal.vercel.app). See [README](../README.md#hackathon-status).
 
 ## User flow (the demo is the product)
 

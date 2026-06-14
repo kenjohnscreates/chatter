@@ -4,6 +4,8 @@ Plain-English guide for judges and submission forms. One paragraph per integrati
 
 **Demo path:** sign in → pay $1 → run research → topic + asset cards → swap (crypto) → ENS receipt at bottom.
 
+**Live app:** [chatterethglobal.vercel.app](https://chatterethglobal.vercel.app)
+
 **On-chain proof:** [docs/SUBMISSION_TXIDS.md](docs/SUBMISSION_TXIDS.md)
 
 ---
@@ -39,7 +41,7 @@ Chatter uses Dynamic for auth and embedded wallets so anyone can sign in with em
 **Feedback log:** [docs/UNISWAP_FEEDBACK.md](docs/UNISWAP_FEEDBACK.md)
 
 **Submission writeup (Uniswap):**  
-Chatter maps Gemini-extracted tickers to Uniswap market data and renders agreement labels between social and on-chain momentum. We execute real testnet swaps via check_approval → Permit2 → quote → swap, with txids in SUBMISSION_TXIDS. We logged API gaps (no key-authenticated market REST, Base Sepolia routing dead ends, equity pool blocks) in UNISWAP_FEEDBACK per the team's on-site request.
+Chatter maps Gemini-extracted tickers to Uniswap market data and renders agreement labels between social and on-chain momentum. We execute real testnet swaps via check_approval → Permit2 → quote → swap (proxied through Cloud Run in production), with txids in SUBMISSION_TXIDS. We logged API gaps (no key-authenticated market REST, Base Sepolia routing dead ends, equity pool blocks) in UNISWAP_FEEDBACK per the team's on-site request.
 
 ---
 

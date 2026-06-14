@@ -6,11 +6,13 @@ Chatter is a Go-To-Market mindshare tool: enter keywords, see where conversation
 
 Built for **[ETHGlobal New York 2026](https://ethglobal.com/)** (Extend Open Source / Continuity). Partner integrations: **Dynamic**, **Uniswap**, **ENS**.
 
+**Live demo:** [chatterethglobal.vercel.app](https://chatterethglobal.vercel.app) · API: [Cloud Run](https://chatter-api-mzhygltoda-uc.a.run.app)
+
 ---
 
 ## Hackathon status
 
-**Last updated:** June 2026 — build complete for submission; deploy (T11) pending.
+**Last updated:** June 2026 — **shipped and deployed** for ETHGlobal NYC submission.
 
 | Milestone | Status |
 |-----------|--------|
@@ -21,8 +23,8 @@ Built for **[ETHGlobal New York 2026](https://ethglobal.com/)** (Extend Open Sou
 | Uniswap market data + tokenized equity badges | Done |
 | Uniswap testnet swap (Sepolia WETH→UNI) | Done — [txids](docs/SUBMISSION_TXIDS.md) |
 | ENS mainnet subnames (`*.chatterchatter.eth`) + brief records | Done — [txids](docs/SUBMISSION_TXIDS.md) |
-| Demo video (local screen) | Done |
-| Production deploy | In progress — [docs/DEPLOY.md](docs/DEPLOY.md) |
+| Demo video | Done |
+| Production deploy (Vercel + Cloud Run) | Done — [docs/DEPLOY.md](docs/DEPLOY.md) |
 
 **Quick links**
 
@@ -32,6 +34,18 @@ Built for **[ETHGlobal New York 2026](https://ethglobal.com/)** (Extend Open Sou
 - [docs/UNISWAP_FEEDBACK.md](docs/UNISWAP_FEEDBACK.md) — API feedback for Uniswap team
 - [docs/PRD.md](docs/PRD.md) — task breakdown and acceptance criteria
 - [docs/USER_FLOW.md](docs/USER_FLOW.md) — screen-by-screen demo path
+
+---
+
+## Try the live app
+
+1. Open [chatterethglobal.vercel.app](https://chatterethglobal.vercel.app)
+2. Sign in with email (Dynamic embedded wallet)
+3. Pay $1 on Base Sepolia → **Run demo** → asset cards → swap (Sepolia ETH) → ENS receipt
+
+**Demo reset (same funded wallet):** DevTools → Application → Local Storage → delete `chatter:paid:*`, `chatter:ens:*`, `chatter:lastPaymentTx:*` for your address, then reload. Local dev has a **Reset payment (demo)** button.
+
+**Pre-fund embedded wallet:** Base Sepolia USDC (~$1 per paywall run) + Ethereum Sepolia ETH (swap gas).
 
 ---
 
@@ -81,6 +95,8 @@ last30days-skill  ──►  core/research.py  ──►  api/main.py  ◄──
 ```
 
 **Chains:** Base Sepolia (Flow), Ethereum Sepolia (swap), Ethereum mainnet (ENS parent `chatterchatter.eth`).
+
+**Production:** Next.js on Vercel → FastAPI on Google Cloud Run (`chatter-eth-global`). Uniswap Trading API calls proxy through the API (server-side key).
 
 ---
 
