@@ -94,42 +94,51 @@ export default function Paywall({ onPaymentSuccess }: PaywallProps) {
   }
 
   return (
-    <div className="mx-auto max-w-md rounded-2xl border border-zinc-800 bg-zinc-900/50 p-8 text-center">
-      <span className="inline-flex items-center rounded-full border border-indigo-500/30 bg-indigo-500/10 px-3 py-1 text-xs font-medium text-indigo-300">
-        Dynamic Flow · Base Sepolia
-      </span>
-      <h2 className="mt-4 text-2xl font-semibold tracking-tight text-white">
-        Unlock a research run — ${PRICE_USD.replace(".00", "")}
-      </h2>
-      <p className="mt-2 text-sm text-zinc-400">
-        Pay $1 in USDC from your wallet. Flow auto-converts from any supported
-        token, so you can pay with whatever you hold.
-      </p>
-
-      <button
-        type="button"
-        onClick={pay}
-        disabled={!walletReady || busy}
-        className="mt-6 inline-flex w-full items-center justify-center rounded-xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        {busy && (
-          <span className="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
-        )}
-        {!walletReady ? "Setting up your wallet…" : STATUS_LABEL[status]}
-      </button>
-
-      <p className="mt-3 text-xs text-zinc-500">
-        Settles to the Chatter treasury · testnet USDC, no real funds.
-      </p>
-
-      {status === "failed" && error && (
-        <div
-          role="alert"
-          className="mt-4 rounded-xl border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-left text-sm text-rose-200"
-        >
-          {error}
+    <div className="mx-auto max-w-md">
+      <div className="win-chrome hard-shadow bg-paper">
+        <div className="win-chrome-bar bg-signal">
+          <span className="win-chrome-dot win-chrome-dot--red" />
+          <span className="win-chrome-dot win-chrome-dot--yellow" />
+          <span className="win-chrome-dot win-chrome-dot--green" />
         </div>
-      )}
+        <div className="px-8 py-10 text-center">
+          <span className="inline-flex items-center rounded border-2 border-ink/20 bg-ink/5 px-3 py-1 font-mono text-[10px] uppercase tracking-wider text-ink/60">
+            Dynamic Flow &middot; Base Sepolia
+          </span>
+          <h2 className="mt-5 font-display text-2xl font-black tracking-tight">
+            Pay ${PRICE_USD.replace(".00", "")} To See Today&apos;s Trends
+          </h2>
+          <p className="mt-3 text-sm text-ink/60">
+            Pay in USDC from your wallet. Flow auto-converts from any supported
+            token — pay with whatever you hold.
+          </p>
+
+          <button
+            type="button"
+            onClick={pay}
+            disabled={!walletReady || busy}
+            className="mt-8 inline-flex w-full items-center justify-center rounded border-[3px] border-ink bg-signal px-5 py-3.5 font-display text-base font-bold text-white transition hover:translate-x-0.5 hover:translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {busy && (
+              <span className="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+            )}
+            {!walletReady ? "Setting up your wallet…" : STATUS_LABEL[status]}
+          </button>
+
+          <p className="mt-4 font-mono text-[10px] text-ink/40">
+            Settles to the Chatter treasury &middot; testnet USDC, no real funds.
+          </p>
+
+          {status === "failed" && error && (
+            <div
+              role="alert"
+              className="mt-5 rounded border-2 border-signal/40 bg-signal/5 px-4 py-3 text-left text-sm text-signal"
+            >
+              {error}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

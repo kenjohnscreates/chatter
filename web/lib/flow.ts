@@ -14,6 +14,7 @@ const ENVIRONMENT_ID = process.env.NEXT_PUBLIC_DYNAMIC_ENVIRONMENT_ID ?? "";
 
 export const PRICE_USD = "1.00";
 export const BASE_SEPOLIA_CHAIN_ID = 84532;
+export const BASE_SEPOLIA_EXPLORER_TX = "https://sepolia.basescan.org/tx/";
 export const BASE_SEPOLIA_USDC =
   "0x036CbD53842c5426634e7929541eC2318f3dCF7e" as const;
 
