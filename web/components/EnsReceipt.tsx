@@ -5,12 +5,14 @@
 // no hard-coded brief content — everything shown comes from on-chain reads.
 
 import { useEffect, useState } from "react";
+import { BASE_SEPOLIA_EXPLORER_TX } from "@/lib/flow";
 import { readEnsRecords, type EnsRecords } from "@/lib/ens";
 
 export interface EnsReceiptProps {
   subname: string;
   ensAppUrl?: string;
   compact?: boolean;
+  refreshKey?: number;
 }
 
 function parseBrief(raw?: string): Record<string, unknown> | null {
@@ -26,6 +28,7 @@ export default function EnsReceipt({
   subname,
   ensAppUrl,
   compact = false,
+  refreshKey = 0,
 }: EnsReceiptProps) {
   const [records, setRecords] = useState<EnsRecords | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -50,7 +53,7 @@ export default function EnsReceipt({
     return () => {
       cancelled = true;
     };
-  }, [subname]);
+  }, [subname, refreshKey]);
 
   const brief = parseBrief(records?.["com.chatter.brief"]);
   const appUrl = ensAppUrl ?? `https://app.ens.domains/${subname}`;
@@ -111,9 +114,14 @@ export default function EnsReceipt({
               <p className="font-mono text-[10px] uppercase tracking-wider text-ink/40">
                 com.chatter.paymentTx
               </p>
-              <p className="mt-1 break-all font-mono text-xs text-ink/70">
+              <a
+                href={`${BASE_SEPOLIA_EXPLORER_TX}${records["com.chatter.paymentTx"]}`}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-1 inline-block break-all font-mono text-xs text-signal underline hover:text-ink"
+              >
                 {records["com.chatter.paymentTx"]}
-              </p>
+              </a>
             </div>
           )}
           {brief && (

@@ -9,7 +9,7 @@ const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8765";
 
 const PUBLIC_RESOLVER =
-  "0x231b0Ee14048e9dCcD1d247744d114a4EB5E8E63" as const;
+  "0xF29100983E058B709F3D539b0c765937B804AC15" as const;
 
 const RESOLVER_ABI = parseAbi([
   "function text(bytes32 node, string key) view returns (string)",

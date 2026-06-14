@@ -26,3 +26,19 @@ wallet. To reproduce from the UI: log in (Dynamic email OTP), fund the embedded 
 with Sepolia ETH, then click **Swap 0.001 WETH** on any verified crypto asset card.
 
 > Append rows as swaps land. Explorer base: https://sepolia.etherscan.io/tx/&lt;hash&gt;
+
+## ENS — subname mint + brief (T9)
+
+- Chain: **Ethereum Mainnet** (chainId 1)
+- Parent: **chatterchatter.eth** (wrapped, server signer `0xD428294070595052d9E0607f28CDf51b52156d2A`)
+- Example subname: **udeadbeef.chatterchatter.eth**
+- Flow: `POST /ens/mint` → NameWrapper `setSubnodeRecord` + PublicResolver `multicall(setText)` → research → `POST /ens/brief` → `setText(com.chatter.brief)` + `safeTransferFrom` to user wallet.
+
+| Date | Step | Tx hash | Explorer |
+|------|------|---------|----------|
+| 2026-06-13 | Mint `setSubnodeRecord` | `0xa4f5ac619c13a2040e2666f471162f6896cdcc84af536222f3c08aee679ebe61` | https://etherscan.io/tx/0xa4f5ac619c13a2040e2666f471162f6896cdcc84af536222f3c08aee679ebe61 |
+| 2026-06-13 | Mint `multicall(setText)` | `0x045ab90d89c81a62a131b6422159d384a98497eb20baf229fa54e58f186b8c13` | https://etherscan.io/tx/0x045ab90d89c81a62a131b6422159d384a98497eb20baf229fa54e58f186b8c13 |
+| 2026-06-13 | Brief `setText` + transfer | `0xa8bed41673ff4f2de8513750949b033fee1c545f2ac790c3de5a253cf8dce467` | https://etherscan.io/tx/0xa8bed41673ff4f2de8513750949b033fee1c545f2ac790c3de5a253cf8dce467 |
+| 2026-06-13 | Brief `safeTransferFrom` | `0x8a78fc4c3989fe5b81ed613164ea51b6b29ac2baedb7e322abe2b2d163d6f6aa` | https://etherscan.io/tx/0x8a78fc4c3989fe5b81ed613164ea51b6b29ac2baedb7e322abe2b2d163d6f6aa |
+
+> Explorer base: https://etherscan.io/tx/&lt;hash&gt;

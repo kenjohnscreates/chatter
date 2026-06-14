@@ -39,7 +39,7 @@ if _ENV_PATH.exists():
         if not _line or _line.startswith("#") or "=" not in _line:
             continue
         _key, _, _val = _line.partition("=")
-        os.environ.setdefault(_key.strip(), _val.strip())
+        os.environ[_key.strip()] = _val.strip()
 
 
 app = FastAPI()

@@ -1,6 +1,6 @@
 # ENS subnames + text records (ENS prize — account/receipt layer).
-# Server signer owns the wrapped parent (chatterethglobal.eth on mainnet); mints
-# <handle>.chatterethglobal.eth for paying users, writes com.chatter.* text records,
+# Server signer owns the wrapped parent (chatterchatter.eth on mainnet); mints
+# <handle>.chatterchatter.eth for paying users, writes com.chatter.* text records,
 # then transfers wrapped ownership after the research brief is published.
 
 from __future__ import annotations
@@ -15,8 +15,8 @@ from web3 import Web3
 from web3.contract import Contract
 
 ENS_REGISTRY = Web3.to_checksum_address("0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e")
-NAME_WRAPPER = Web3.to_checksum_address("0xD4416B13f2bA7b2dF819a6aEB35D78AbA0d3C233")
-PUBLIC_RESOLVER = Web3.to_checksum_address("0x231b0Ee14048e9dCcD1d247744d114a4EB5E8E63")
+NAME_WRAPPER = Web3.to_checksum_address("0xD4416b13d2b3a9aBae7AcD5D6C2BbDBE25686401")
+PUBLIC_RESOLVER = Web3.to_checksum_address("0xF29100983E058B709F3D539b0c765937B804AC15")
 MAX_UINT64 = 2**64 - 1
 ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
 
@@ -104,7 +104,7 @@ _account: Account | None = None
 
 
 def _parent_name() -> str:
-    return os.environ.get("ENS_PARENT_NAME", "chatterethglobal.eth").strip().lower()
+    return os.environ.get("ENS_PARENT_NAME", "chatterchatter.eth").strip().lower()
 
 
 def _rpc_url() -> str:
@@ -178,8 +178,8 @@ def _wrapped_owner(w3: Web3, node: bytes) -> str:
 
 def _send_tx(w3: Web3, account: Account, tx: dict[str, Any]) -> str:
     tx.setdefault("chainId", w3.eth.chain_id)
-    if "gas" not in tx or tx["gas"] is None:
-        tx["gas"] = int(w3.eth.estimate_gas(tx) * 1.2)
+    # build_transaction() can bake in a stale/low gas limit; always re-estimate.
+    tx["gas"] = int(w3.eth.estimate_gas(tx) * 1.2)
     if "maxFeePerGas" not in tx and "gasPrice" not in tx:
         tx["maxFeePerGas"] = w3.eth.gas_price
         tx["maxPriorityFeePerGas"] = w3.eth.max_priority_fee
@@ -217,15 +217,29 @@ def _build_tx(
     nonce: int,
     gas: int | None = None,
 ) -> dict[str, Any]:
-    tx = fn.build_transaction(
-        {
-            "from": account.address,
-            "nonce": nonce,
-            "chainId": w3.eth.chain_id,
-            "gas": gas or 400_000,
-        }
-    )
-    return tx
+    params: dict[str, Any] = {
+        "from": account.address,
+        "nonce": nonce,
+        "chainId": w3.eth.chain_id,
+    }
+    if gas is not None:
+        params["gas"] = gas
+    return fn.build_transaction(params)
+
+
+def _slim_brief(brief: Any) -> dict[str, Any]:
+    topics = brief.get("topics", []) if isinstance(brief, dict) else []
+    return {
+        "topics": [
+            {
+                "keyword": t.get("keyword"),
+                "sentiment": t.get("sentiment"),
+                "momentum_score": t.get("momentum_score"),
+            }
+            for t in topics
+            if isinstance(t, dict)
+        ]
+    }
 
 
 def read_text(subname: str, key: str) -> str:
@@ -288,7 +302,7 @@ def mint_subname(
 
     records: list[tuple[str, str]] = [
         ("description", "Chatter research receipt — owned by your wallet."),
-        ("url", "https://chatter.eth"),
+        ("url", "https://app.ens.domains/chatterchatter.eth"),
         ("com.chatter.version", "1"),
         (
             "com.chatter.brief",
@@ -341,20 +355,26 @@ def publish_brief(
             f"cannot publish brief for {resolved_subname}: unexpected owner {wrapped_owner}"
         )
 
-    payload = json.dumps(brief, separators=(",", ":"))
+    payload = json.dumps(_slim_brief(brief), separators=(",", ":"))
     nonce = w3.eth.get_transaction_count(account.address)
+    server_owns = wrapped_owner.lower() == account.address.lower()
+    user_owns = wrapped_owner.lower() == owner.lower()
 
-    if wrapped_owner.lower() == account.address.lower():
+    current_brief = _resolver(w3).functions.text(node, "com.chatter.brief").call()
+    needs_set_text = current_brief != payload
+
+    if needs_set_text and (server_owns or user_owns):
         brief_tx = _build_tx(
             w3,
             account,
             _resolver(w3).functions.setText(node, "com.chatter.brief", payload),
             nonce=nonce,
-            gas=200_000,
         )
         tx_hashes.append(_send_tx(w3, account, brief_tx))
         nonce += 1
 
+    transferred = user_owns
+    if server_owns:
         transfer_tx = _build_tx(
             w3,
             account,
@@ -366,11 +386,8 @@ def publish_brief(
                 b"",
             ),
             nonce=nonce,
-            gas=300_000,
         )
         tx_hashes.append(_send_tx(w3, account, transfer_tx))
-        transferred = True
-    else:
         transferred = True
 
     return {
