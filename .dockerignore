@@ -1,0 +1,14 @@
+.git
+.cursor
+.ens-registration
+research_outputs
+**/__pycache__
+**/*.pyc
+**/.venv
+**/node_modules
+web
+docs/user-flow.html
+scripts/ens_*.py
+scripts/register_wrap_ens_sepolia.py
+.env
+web/.env.local

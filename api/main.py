@@ -43,9 +43,17 @@ if _ENV_PATH.exists():
 
 
 app = FastAPI()
+
+_cors_raw = os.environ.get("CORS_ALLOWED_ORIGINS", "*").strip()
+_cors_origins = (
+    ["*"]
+    if _cors_raw == "*"
+    else [origin.strip() for origin in _cors_raw.split(",") if origin.strip()]
+)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_cors_origins,
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
