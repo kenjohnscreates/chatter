@@ -2,7 +2,7 @@
 
 **See where the chatter is. Pay $1. Act on the trend.**
 
-Chatter is a Go-To-Market mindshare tool: enter keywords, see where conversation lives across Reddit, HN, GitHub, Polymarket, and more — then act on trends with on-chain data and swaps.
+Chatter is a Go-To-Market mindshare tool: enter keywords, see where conversation lives across Reddit, HN, GitHub, Polymarket, and more! Act on trends with onchain data and swaps.
 
 Built for **[ETHGlobal New York 2026](https://ethglobal.com/)** (Extend Open Source / Continuity). Partner integrations: **Dynamic**, **Uniswap**, **ENS**.
 
