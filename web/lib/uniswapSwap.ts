@@ -13,8 +13,14 @@ import {
 } from "viem";
 import type { PaymentPublicClient, PaymentWalletClient } from "@/lib/flow";
 
-const TRADING_API = "https://trade-api.gateway.uniswap.org/v1";
-const API_KEY = process.env.NEXT_PUBLIC_UNISWAP_API_KEY ?? "";
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8765";
+
+const SWAP_PROXY: Record<string, string> = {
+  "/check_approval": "/swap/check_approval",
+  "/quote": "/swap/quote",
+  "/swap": "/swap/execute",
+};
 
 export const SWAP_CHAIN_ID = 11155111; // Ethereum Sepolia
 export const SWAP_CHAIN_NAME = "Ethereum Sepolia";
@@ -105,16 +111,24 @@ const WETH_ABI = parseAbi([
 ]);
 
 async function tradeFetch<T>(path: string, body: unknown): Promise<T> {
-  if (!API_KEY) throw new Error("Missing NEXT_PUBLIC_UNISWAP_API_KEY");
-  const res = await fetch(`${TRADING_API}${path}`, {
+  const route = SWAP_PROXY[path];
+  if (!route) throw new Error(`Unsupported swap path: ${path}`);
+  const res = await fetch(`${API_BASE}${route}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", "x-api-key": API_KEY },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok || data?.errorCode) {
-    const detail = data?.detail || data?.errorCode || res.statusText;
+  if (!res.ok) {
+    const detail =
+      (typeof data?.detail === "string" && data.detail) ||
+      data?.errorCode ||
+      res.statusText;
     throw new Error(`Uniswap ${path} (${res.status}): ${detail}`);
+  }
+  if (data?.errorCode) {
+    const detail = data?.detail || data.errorCode;
+    throw new Error(`Uniswap ${path}: ${detail}`);
   }
   return data as T;
 }

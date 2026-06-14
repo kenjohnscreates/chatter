@@ -113,7 +113,7 @@ Or connect the GitHub repo in Vercel UI:
 | `NEXT_PUBLIC_RESEARCH_LIVE` | `false` | Cached demo for judges |
 | `NEXT_PUBLIC_SIMULATE_RESEARCH_MS` | `10000` | Progress bar pacing |
 
-`NEXT_PUBLIC_UNISWAP_API_KEY` — only if swap calls from browser need it (see `web/lib/uniswapSwap.ts`).
+Swap calls go through the API (`POST /swap/*`); `UNISWAP_API_KEY` on Cloud Run is sufficient — no browser key needed.
 
 ### Dynamic checklist
 

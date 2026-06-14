@@ -30,6 +30,7 @@ from core.research import run_research
 from api.gemini import summarize_markdown
 from api.ens import mint_subname, publish_brief, read_records
 from api.uniswap_data import get_assets, load_token_list
+from api.uniswap_swap import proxy_trading_api
 
 # Load repo-root .env so server secrets (DYNAMIC_API_KEY etc.) resolve without a launcher.
 _ENV_PATH = Path(__file__).resolve().parent.parent / ".env"
@@ -289,3 +290,19 @@ def assets(tickers: str = "") -> dict:
     if not symbols:
         return {"assets": []}
     return get_assets(symbols)
+
+
+# --- Uniswap Trading API proxy (browser -> Chatter API -> Uniswap) ------------
+_SWAP_PATHS = {
+    "check_approval": "/check_approval",
+    "quote": "/quote",
+    "execute": "/swap",
+}
+
+
+@app.post("/swap/{action}")
+def swap_proxy(action: str, body: dict[str, Any]) -> dict:
+    path = _SWAP_PATHS.get(action)
+    if path is None:
+        raise HTTPException(status_code=404, detail=f"Unknown swap action: {action}")
+    return proxy_trading_api(path, body)
