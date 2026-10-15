@@ -32,7 +32,7 @@ Built for **[ETHGlobal New York 2026](https://ethglobal.com/)** (Extend Open Sou
 - [docs/SUBMISSION_TXIDS.md](docs/SUBMISSION_TXIDS.md) — Flow, Uniswap, and ENS transaction hashes
 - [docs/DEPLOY.md](docs/DEPLOY.md) — Cloud Run + Vercel deploy steps
 - [docs/UNISWAP_FEEDBACK.md](docs/UNISWAP_FEEDBACK.md) — API feedback for Uniswap team
-- [docs/PRD.md](docs/PRD.md) — task breakdown and acceptance criteria
+- [docs/PRD.md](docs/PRD.md) — Chatter Ample v1 PRD (hackathon PRD archived at [docs/archive/PRD-ethglobal-2026-06.md](docs/archive/PRD-ethglobal-2026-06.md))
 - [docs/USER_FLOW.md](docs/USER_FLOW.md) — screen-by-screen demo path
 
 ---
@@ -107,7 +107,7 @@ last30days-skill  ──►  core/research.py  ──►  api/main.py  ◄──
 | **Product idea** | Existing open-source GTM tool + hackathon PRD (not LLM-invented) |
 | **Research engine** | [last30days-skill](https://github.com/mvanhorn/last30days-skill) |
 | **Trend briefs** | **Gemini** in-product (`api/gemini.py`) |
-| **Implementation** | **Cursor** agents directed by [docs/PRD.md](docs/PRD.md) and [docs/HACKATHON_PLAN.md](docs/HACKATHON_PLAN.md) |
+| **Implementation** | **Cursor** agents directed by [docs/archive/PRD-ethglobal-2026-06.md](docs/archive/PRD-ethglobal-2026-06.md) and [docs/HACKATHON_PLAN.md](docs/HACKATHON_PLAN.md) |
 
 Committed granular task history (~25 commits) per ETHGlobal guidance. Plan docs in `docs/` are the directed-AI artifacts.
 

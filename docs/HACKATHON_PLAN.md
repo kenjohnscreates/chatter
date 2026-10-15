@@ -1,6 +1,6 @@
 # ETHGlobal New York 2026 — Hackathon Plan (rev 5, locked)
 
-> Execution detail lives in [PRD.md](PRD.md) — task breakdown with files, acceptance criteria, dependencies, and model-tier assignments for delegated builds.
+> Execution detail lives in [archive/PRD-ethglobal-2026-06.md](archive/PRD-ethglobal-2026-06.md) — task breakdown with files, acceptance criteria, dependencies, and model-tier assignments for delegated builds.
 
 **Rev 5 updates (from on-site meetings with Uniswap):**
 - Install Uniswap AI skills (`npx skills add Uniswap/uniswap-ai`) before building — the `swap-integration` skill documents the exact Trading API flow (check_approval, quote, execute) and guides any coding agent.
